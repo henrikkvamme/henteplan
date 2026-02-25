@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="nb">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Henteplan — Finn din renovasjonskalender</title>
+    <meta
+      name="description"
+      content="Søk opp adressen din og finn hentedager for avfall. Legg til i kalenderen din med ett klikk."
+    >
+    <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+    }
+
+    :root {
+      --bg: #fafafa;
+      --bg-card: #ffffff;
+      --text: #18181b;
+      --text-muted: #71717a;
+      --border: #e4e4e7;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #09090b;
+        --bg-card: #18181b;
+        --text: #fafafa;
+        --text-muted: #a1a1aa;
+        --border: #27272a;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    main {
+      width: 100%;
+      max-width: 560px;
+      padding: 48px 20px 120px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      margin-top: 4px;
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    .search-wrap {
+      position: relative;
+      margin-top: 32px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      color: var(--text);
+      outline: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .results-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      left: 0;
+      z-index: 10;
+      display: none;
+      max-height: 280px;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .results-dropdown.visible {
+      display: block;
+    }
+
+    .result-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    .result-item:last-child {
+      border-bottom: none;
+    }
+    .result-item:hover {
+      background: var(--border);
+    }
+
+    .result-badge {
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      background: var(--bg);
+      border-radius: 4px;
+    }
+
+    .schedule {
+      display: none;
+      margin-top: 28px;
+    }
+
+    .schedule.visible {
+      display: block;
+    }
+
+    .schedule-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .schedule-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .schedule-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition:
+        background 0.15s,
+        border-color 0.15s;
+    }
+
+    .btn:hover {
+      border-color: var(--text-muted);
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+
+    .pickup-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pickup-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .pickup-dot {
+      flex-shrink: 0;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .pickup-fraction {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .pickup-date {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      padding: 40px 20px;
+      font-size: 14px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      z-index: 50;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--bg);
+      background: var(--text);
+      border-radius: 8px;
+      opacity: 0;
+      transform: translateX(-50%) translateY(100px);
+      transition:
+        transform 0.3s,
+        opacity 0.3s;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    footer {
+      padding: 24px 20px;
+      margin-top: auto;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    footer a:hover {
+      color: var(--text);
+    }
+
+    .spinner {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      transform: translateY(-50%);
+      animation: spin 0.6s linear infinite;
+    }
+
+    .spinner.visible {
+      display: block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: translateY(-50%) rotate(360deg);
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Henteplan</h1>
+      <p class="tagline">Finn hentedager for avfall ved din adresse</p>
+
+      <div class="search-wrap">
+        <input
+          type="text"
+          class="search-input"
+          id="search"
+          placeholder="Skriv inn adresse..."
+          autocomplete="off"
+        >
+        <div class="spinner" id="spinner"></div>
+        <div class="results-dropdown" id="results"></div>
+      </div>
+
+      <div class="schedule" id="schedule">
+        <div class="schedule-header">
+          <span class="schedule-title" id="schedule-title"></span>
+          <div class="schedule-actions">
+            <button
+              type="button"
+              class="btn"
+              id="btn-copy"
+              title="Kopier abonnements-URL"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect width="14" height="14" x="8" y="8" rx="2" />
+                <path
+                  d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                />
+              </svg>
+              Kopier URL
+            </button>
+            <a
+              class="btn btn-primary"
+              id="btn-download"
+              download="henteplan.ics"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" x2="12" y1="15" y2="3" />
+              </svg>
+              Last ned .ics
+            </a>
+          </div>
+        </div>
+        <div class="pickup-list" id="pickup-list"></div>
+      </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <footer>
+      <a href="/docs">API-dokumentasjon</a>
+      &nbsp;&middot;&nbsp; Laget av folkene bak
+      <a href="https://sambu.no" target="_blank" rel="noopener">sambu.no</a>
+    </footer>
+
+    <script>
+    "use strict";
+    const API = window.location.origin;
+    const searchInput = document.getElementById("search");
+    const resultsEl = document.getElementById("results");
+    const spinnerEl = document.getElementById("spinner");
+    const scheduleEl = document.getElementById("schedule");
+    const scheduleTitleEl = document.getElementById("schedule-title");
+    const pickupListEl = document.getElementById("pickup-list");
+    const btnCopy = document.getElementById("btn-copy");
+    const btnDownload = document.getElementById("btn-download");
+    const toastEl = document.getElementById("toast");
+
+    let debounceTimer = null;
+    let currentProvider = null;
+    let currentLocationId = null;
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      const q = searchInput.value.trim();
+      if (q.length < 2) {
+        resultsEl.classList.remove("visible");
+        spinnerEl.classList.remove("visible");
+        return;
+      }
+      spinnerEl.classList.add("visible");
+      debounceTimer = setTimeout(() => searchAddresses(q), 300);
+    });
+
+    searchInput.addEventListener("focus", () => {
+      if (resultsEl.children.length > 0) {
+        resultsEl.classList.add("visible");
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".search-wrap")) {
+        resultsEl.classList.remove("visible");
+      }
+    });
+
+    async function searchAddresses(q) {
+      try {
+        const res = await fetch(
+          `${API}/api/v1/search?q=${encodeURIComponent(q)}`
+        );
+        const data = await res.json();
+        renderResults(data.results || []);
+      } catch {
+        renderResults([]);
+      } finally {
+        spinnerEl.classList.remove("visible");
+      }
+    }
+
+    function renderResults(results) {
+      resultsEl.innerHTML = "";
+      if (results.length === 0) {
+        resultsEl.classList.remove("visible");
+        return;
+      }
+      for (const r of results) {
+        const div = document.createElement("div");
+        div.className = "result-item";
+        div.innerHTML = `<span class="result-badge">${esc(r.provider)}</span><span>${esc(r.label)}</span>`;
+        div.addEventListener("click", () => selectAddress(r));
+        resultsEl.appendChild(div);
+      }
+      resultsEl.classList.add("visible");
+    }
+
+    async function selectAddress(result) {
+      resultsEl.classList.remove("visible");
+      searchInput.value = result.label;
+      currentProvider = result.provider;
+      currentLocationId = result.locationId;
+
+      const icsUrl = `${API}/api/v1/schedule.ics?provider=${encodeURIComponent(currentProvider)}&locationId=${encodeURIComponent(currentLocationId)}`;
+      btnDownload.href = icsUrl;
+
+      try {
+        const res = await fetch(
+          `${API}/api/v1/schedule?provider=${encodeURIComponent(result.provider)}&locationId=${encodeURIComponent(result.locationId)}`
+        );
+        const data = await res.json();
+        renderSchedule(data.pickups || []);
+      } catch {
+        pickupListEl.innerHTML =
+          '<div class="empty-state">Kunne ikke hente data. Prøv igjen.</div>';
+        scheduleEl.classList.add("visible");
+      }
+    }
+
+    function renderSchedule(pickups) {
+      scheduleTitleEl.textContent = "Henteplan";
+      pickupListEl.innerHTML = "";
+
+      if (pickups.length === 0) {
+        pickupListEl.innerHTML =
+          '<div class="empty-state">Ingen kommende hentinger funnet.</div>';
+        scheduleEl.classList.add("visible");
+        return;
+      }
+
+      // Group by date, show next occurrences per fraction
+      const seen = new Map();
+      for (const p of pickups) {
+        if (!seen.has(p.fraction)) {
+          seen.set(p.fraction, p);
+        }
+      }
+
+      const upcoming = [...seen.values()].sort((a, b) =>
+        a.date.localeCompare(b.date)
+      );
+
+      for (const p of upcoming) {
+        const div = document.createElement("div");
+        div.className = "pickup-item";
+        div.innerHTML = `
+          <span class="pickup-dot" style="background:${esc(p.color)}"></span>
+          <span class="pickup-fraction">${esc(p.fraction)}</span>
+          <span class="pickup-date">${formatDate(p.date)}</span>
+        `;
+        pickupListEl.appendChild(div);
+      }
+
+      scheduleEl.classList.add("visible");
+    }
+
+    btnCopy.addEventListener("click", async () => {
+      if (!(currentProvider && currentLocationId)) {
+        return;
+      }
+      const url = `${API}/api/v1/schedule.ics?provider=${encodeURIComponent(currentProvider)}&locationId=${encodeURIComponent(currentLocationId)}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("URL kopiert til utklippstavlen");
+      } catch {
+        showToast("Kunne ikke kopiere");
+      }
+    });
+
+    function formatDate(iso) {
+      const d = new Date(`${iso}T00:00:00`);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diff = Math.round((d - today) / 86_400_000);
+
+      if (diff === 0) {
+        return "I dag";
+      }
+      if (diff === 1) {
+        return "I morgen";
+      }
+
+      const dayNames = ["søn", "man", "tir", "ons", "tor", "fre", "lør"];
+      const monthNames = [
+        "jan",
+        "feb",
+        "mar",
+        "apr",
+        "mai",
+        "jun",
+        "jul",
+        "aug",
+        "sep",
+        "okt",
+        "nov",
+        "des",
+      ];
+      return `${dayNames[d.getDay()]} ${d.getDate()}. ${monthNames[d.getMonth()]}`;
+    }
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("visible");
+      setTimeout(() => toastEl.classList.remove("visible"), 2000);
+    }
+    </script>
+  </body>
+</html>

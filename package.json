@@ -1,0 +1,27 @@
+{
+  "name": "henteplan",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "check": "bunx biome check src/",
+    "fix": "bunx biome check --fix src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^0.18.4",
+    "@scalar/hono-api-reference": "^0.5.183",
+    "hono": "^4.7.4",
+    "hono-rate-limiter": "^0.4.2",
+    "ical-generator": "^8.0.0",
+    "node-html-parser": "^7.0.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.0",
+    "@types/bun": "latest",
+    "typescript": "^5.7.3",
+    "ultracite": "^7.2.3"
+  }
+}
