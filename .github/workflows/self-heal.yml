@@ -31,19 +31,23 @@ jobs:
 
       - name: Re-run smoke tests and capture output
         id: retest
-        continue-on-error: true
-        run: bun test src/tests/e2e --timeout 120000 2>&1 | tee test-output.txt
+        run: |
+          if bun test src/tests/e2e --timeout 120000 2>&1 | tee test-output.txt; then
+            echo "result=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=fail" >> "$GITHUB_OUTPUT"
+          fi
         env:
           HENTEPLAN_API_KEY: ${{ secrets.HENTEPLAN_API_KEY }}
 
       - name: Exit if tests pass
-        if: steps.retest.outcome == 'success'
+        if: steps.retest.outputs.result == 'pass'
         run: |
           echo "Smoke tests passed on re-run — likely a transient issue."
           exit 0
 
       - name: Check for existing auto-heal PR
-        if: steps.retest.outcome == 'failure'
+        if: steps.retest.outputs.result == 'fail'
         id: check-pr
         run: |
           OPEN_PRS=$(gh pr list --label auto-heal --state open --json number --jq length)
@@ -57,17 +61,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Claude Code
-        if: steps.retest.outcome == 'failure' && steps.check-pr.outputs.skip != 'true'
+        if: steps.retest.outputs.result == 'fail' && steps.check-pr.outputs.skip != 'true'
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Install Playwright
-        if: steps.retest.outcome == 'failure' && steps.check-pr.outputs.skip != 'true'
+        if: steps.retest.outputs.result == 'fail' && steps.check-pr.outputs.skip != 'true'
         run: |
           npm install -g playwright
           npx playwright install chromium --with-deps
 
       - name: Run Claude Code to diagnose and fix
-        if: steps.retest.outcome == 'failure' && steps.check-pr.outputs.skip != 'true'
+        if: steps.retest.outputs.result == 'fail' && steps.check-pr.outputs.skip != 'true'
         run: |
           claude -p "$(cat .github/prompts/heal-provider.md)" \
             --model opus \
@@ -78,7 +82,7 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
       - name: Verify fix with smoke tests
-        if: steps.retest.outcome == 'failure' && steps.check-pr.outputs.skip != 'true'
+        if: steps.retest.outputs.result == 'fail' && steps.check-pr.outputs.skip != 'true'
         id: verify
         continue-on-error: true
         run: bun test src/tests/e2e --timeout 120000
@@ -129,5 +133,5 @@ jobs:
         run: echo "Auto-heal failed — manual intervention needed. See workflow run for details."
 
       - name: Notify on skip (transient)
-        if: steps.retest.outcome == 'success'
+        if: steps.retest.outputs.result == 'pass'
         run: echo "Tests passed on re-run — no fix needed."
