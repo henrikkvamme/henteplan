@@ -1,0 +1,133 @@
+name: Self-Heal Providers
+
+on:
+  workflow_run:
+    workflows: ["Provider Smoke Tests"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: self-heal
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+
+jobs:
+  heal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - name: Re-run smoke tests and capture output
+        id: retest
+        continue-on-error: true
+        run: bun test src/tests/e2e --timeout 120000 2>&1 | tee test-output.txt
+        env:
+          HENTEPLAN_API_KEY: ${{ secrets.HENTEPLAN_API_KEY }}
+
+      - name: Exit if tests pass
+        if: steps.retest.outcome == 'success'
+        run: |
+          echo "Smoke tests passed on re-run — likely a transient issue."
+          exit 0
+
+      - name: Check for existing auto-heal PR
+        if: steps.retest.outcome == 'failure'
+        id: check-pr
+        run: |
+          OPEN_PRS=$(gh pr list --label auto-heal --state open --json number --jq length)
+          if [ "$OPEN_PRS" -gt 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "An auto-heal PR is already open — skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Claude Code
+        if: steps.retest.outcome == 'failure' && steps.check-pr.outputs.skip != 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install Playwright
+        if: steps.retest.outcome == 'failure' && steps.check-pr.outputs.skip != 'true'
+        run: |
+          npm install -g playwright
+          npx playwright install chromium --with-deps
+
+      - name: Run Claude Code to diagnose and fix
+        if: steps.retest.outcome == 'failure' && steps.check-pr.outputs.skip != 'true'
+        run: |
+          claude -p "$(cat .github/prompts/heal-provider.md)" \
+            --model opus \
+            --dangerously-skip-permissions \
+            --max-turns 40 \
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep"
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+      - name: Verify fix with smoke tests
+        if: steps.retest.outcome == 'failure' && steps.check-pr.outputs.skip != 'true'
+        id: verify
+        continue-on-error: true
+        run: bun test src/tests/e2e --timeout 120000
+        env:
+          HENTEPLAN_API_KEY: ${{ secrets.HENTEPLAN_API_KEY }}
+
+      - name: Create PR if fix passes
+        if: steps.verify.outcome == 'success'
+        run: |
+          BRANCH="auto-heal/$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH"
+          git add src/providers/ src/fractions/
+          if git diff --cached --quiet; then
+            echo "No changes to commit — agent likely detected a transient issue."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "$(cat <<'EOF'
+          fix: auto-heal provider breakage
+
+          Automated fix applied by Claude Code after smoke test failure.
+          EOF
+          )"
+          git push origin "$BRANCH"
+          PR_BODY="## Summary
+          Automated provider fix applied by Claude Code after smoke test failure.
+
+          - Smoke tests detected a provider breakage
+          - Claude Code diagnosed the issue and applied a surgical fix
+          - Smoke tests pass after the fix
+
+          ## Verification
+          - [x] Smoke tests pass in healing workflow
+          - [ ] CI passes on this PR (auto-merge enabled)
+
+          > This PR was created automatically by the self-heal workflow."
+          gh pr create \
+            --title "fix: auto-heal provider breakage" \
+            --body "$PR_BODY" \
+            --label auto-heal
+          gh pr merge --squash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify on failure
+        if: steps.verify.outcome == 'failure'
+        run: echo "Auto-heal failed — manual intervention needed. See workflow run for details."
+
+      - name: Notify on skip (transient)
+        if: steps.retest.outcome == 'success'
+        run: echo "Tests passed on re-run — no fix needed."
