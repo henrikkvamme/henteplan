@@ -8,6 +8,9 @@
       name="description"
       content="Søk opp adressen din og finn hentedager for avfall. Legg til i kalenderen din med ett klikk."
     >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
     *,
     *::before,
@@ -18,28 +21,21 @@
     }
 
     :root {
-      --bg: #fafafa;
-      --bg-card: #ffffff;
-      --text: #18181b;
-      --text-muted: #71717a;
-      --border: #e4e4e7;
-      --primary: #10b981;
-      --primary-hover: #059669;
-      --radius: 12px;
-      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
-      --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #09090b;
-        --bg-card: #18181b;
-        --text: #fafafa;
-        --text-muted: #a1a1aa;
-        --border: #27272a;
-        --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
-      }
+      color-scheme: light;
+      --bg: #FAF7F2;
+      --bg-card: #FFFFFF;
+      --text: #2C2C2C;
+      --text-muted: #6B6560;
+      --border: #E8E2D8;
+      --primary: #2A7C6F;
+      --primary-hover: #1A5C52;
+      --secondary: #C4704B;
+      --accent: #E6B35A;
+      --radius: 16px;
+      --shadow: 0 2px 8px rgba(44, 44, 44, 0.06), 0 1px 3px rgba(44, 44, 44, 0.04);
+      --shadow-lg: 0 8px 24px rgba(44, 44, 44, 0.1), 0 2px 8px rgba(44, 44, 44, 0.06);
+      --font-heading: 'Fraunces', Georgia, serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     body {
@@ -47,70 +43,100 @@
       flex-direction: column;
       align-items: center;
       min-height: 100dvh;
-      font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: var(--font-body);
       color: var(--text);
       background: var(--bg);
+      -webkit-font-smoothing: antialiased;
     }
 
     main {
       width: 100%;
-      max-width: 560px;
-      padding: 48px 20px 120px;
+      max-width: 640px;
+      padding: 0 24px 120px;
+    }
+
+    /* Hero */
+
+    .hero {
+      text-align: center;
+      padding-top: 48px;
+      padding-bottom: 8px;
+      animation: fadeInUp 0.6s ease-out both;
+    }
+
+    .hero-illustration {
+      margin-bottom: 24px;
+      line-height: 0;
+    }
+
+    .hero-img {
+      width: 100%;
+      max-width: 540px;
+      height: auto;
+      border-radius: var(--radius);
+      animation: gentleWobble 6s ease-in-out infinite;
     }
 
     h1 {
-      font-size: 28px;
+      font-family: var(--font-heading);
+      font-size: 36px;
       font-weight: 700;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
     }
 
     .tagline {
-      margin-top: 4px;
-      font-size: 15px;
+      margin-top: 6px;
+      font-size: 16px;
       color: var(--text-muted);
+      line-height: 1.5;
     }
+
+    /* Search */
 
     .search-wrap {
       position: relative;
-      margin-top: 32px;
+      margin-top: 28px;
+      animation: fadeInUp 0.6s ease-out 0.15s both;
     }
 
     .search-input {
       width: 100%;
-      padding: 14px 16px;
+      padding: 16px 20px;
+      font-family: var(--font-body);
       font-size: 16px;
       color: var(--text);
       outline: none;
       background: var(--bg-card);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       transition:
-        border-color 0.15s,
-        box-shadow 0.15s;
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
     }
 
     .search-input:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+      box-shadow: 0 0 0 4px rgba(42, 124, 111, 0.12);
     }
 
     .search-input::placeholder {
       color: var(--text-muted);
     }
 
+    /* Dropdown */
+
     .results-dropdown {
       position: absolute;
-      top: calc(100% + 4px);
+      top: calc(100% + 6px);
       right: 0;
       left: 0;
       z-index: 10;
       display: none;
-      max-height: 280px;
+      max-height: 300px;
       overflow-y: auto;
       background: var(--bg-card);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow-lg);
     }
@@ -121,20 +147,20 @@
 
     .result-item {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       align-items: center;
-      padding: 12px 16px;
+      padding: 14px 20px;
       font-size: 14px;
       cursor: pointer;
       border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
+      transition: background 0.15s ease;
     }
 
     .result-item:last-child {
       border-bottom: none;
     }
     .result-item:hover {
-      background: var(--border);
+      background: rgba(42, 124, 111, 0.06);
     }
 
     .result-badge {
@@ -149,13 +175,16 @@
       border-radius: 4px;
     }
 
+    /* Schedule */
+
     .schedule {
       display: none;
-      margin-top: 28px;
+      margin-top: 36px;
     }
 
     .schedule.visible {
       display: block;
+      animation: fadeInUp 0.3s ease-out both;
     }
 
     .schedule-header {
@@ -166,8 +195,9 @@
     }
 
     .schedule-title {
-      font-size: 16px;
-      font-weight: 600;
+      font-family: var(--font-heading);
+      font-size: 20px;
+      font-weight: 700;
     }
 
     .schedule-actions {
@@ -175,26 +205,37 @@
       gap: 8px;
     }
 
+    /* Buttons */
+
     .btn {
       display: inline-flex;
       gap: 6px;
       align-items: center;
-      padding: 8px 14px;
+      padding: 10px 16px;
+      font-family: var(--font-body);
       font-size: 13px;
       font-weight: 500;
       color: var(--text);
       text-decoration: none;
       cursor: pointer;
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
       transition:
-        background 0.15s,
-        border-color 0.15s;
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
     }
 
     .btn:hover {
       border-color: var(--text-muted);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn:active {
+      transform: translateY(0);
     }
 
     .btn-primary {
@@ -206,34 +247,50 @@
     .btn-primary:hover {
       background: var(--primary-hover);
       border-color: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(42, 124, 111, 0.25);
     }
+
+    /* Pickup list */
 
     .pickup-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
     }
 
     .pickup-item {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
-      padding: 12px 16px;
+      padding: 16px 20px;
       background: var(--bg-card);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      animation: cardEntry 0.4s ease-out forwards;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .pickup-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
     }
 
     .pickup-dot {
       flex-shrink: 0;
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
     }
 
     .pickup-fraction {
       flex: 1;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
     }
 
@@ -243,29 +300,75 @@
       white-space: nowrap;
     }
 
+    /* Empty state */
+
     .empty-state {
-      padding: 40px 20px;
-      font-size: 14px;
+      padding: 48px 24px;
+      font-size: 15px;
       color: var(--text-muted);
       text-align: center;
     }
 
+    .empty-state-img {
+      display: block;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 20px;
+      object-fit: contain;
+      border-radius: var(--radius);
+    }
+
+    /* Skeleton loading */
+
+    .skeleton-item {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .skeleton-dot {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--border);
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-bar {
+      height: 14px;
+      border-radius: 6px;
+      background: var(--border);
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-bar--long { width: 55%; }
+    .skeleton-bar--short { width: 80px; margin-left: auto; }
+
+    /* Toast */
+
     .toast {
       position: fixed;
-      bottom: 24px;
+      bottom: 28px;
       left: 50%;
       z-index: 50;
-      padding: 10px 20px;
+      padding: 12px 24px;
+      font-family: var(--font-body);
       font-size: 13px;
       font-weight: 500;
-      color: var(--bg);
+      color: #fff;
       background: var(--text);
-      border-radius: 8px;
+      border-radius: 10px;
+      box-shadow: var(--shadow-lg);
       opacity: 0;
-      transform: translateX(-50%) translateY(100px);
+      transform: translateX(-50%) translateY(20px);
       transition:
-        transform 0.3s,
-        opacity 0.3s;
+        transform 0.3s ease,
+        opacity 0.3s ease;
     }
 
     .toast.visible {
@@ -273,28 +376,115 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    /* Footer */
+
     footer {
-      padding: 24px 20px;
+      padding: 32px 24px;
       margin-top: auto;
       font-size: 13px;
       color: var(--text-muted);
       text-align: center;
+      border-top: 1px solid var(--border);
     }
 
     footer a {
-      color: var(--text-muted);
-      text-decoration: underline;
-      text-underline-offset: 2px;
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.15s ease;
     }
 
     footer a:hover {
-      color: var(--text);
+      color: var(--primary-hover);
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
+
+    /* OpenClaw banner */
+
+    .openclaw-banner {
+      margin-top: 48px;
+      padding: 28px 24px;
+      text-align: center;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      animation: fadeInUp 0.6s ease-out 0.3s both;
+    }
+
+    .openclaw-banner-title {
+      font-family: var(--font-heading);
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .openclaw-banner-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .openclaw-install {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      max-width: 420px;
+      margin: 0 auto 14px;
+      background: #1A1916;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .openclaw-install code {
+      flex: 1;
+      padding: 12px 16px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      color: #F0EBE3;
+      text-align: left;
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+
+    .openclaw-install-copy {
+      flex-shrink: 0;
+      padding: 12px 14px;
+      color: #9C9589;
+      cursor: pointer;
+      background: none;
+      border: none;
+      border-left: 1px solid #3A3632;
+      transition: color 0.15s ease;
+    }
+
+    .openclaw-install-copy:hover {
+      color: #F0EBE3;
+    }
+
+    .openclaw-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .openclaw-link:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* Spinner */
 
     .spinner {
       position: absolute;
       top: 50%;
-      right: 14px;
+      right: 16px;
       display: none;
       width: 20px;
       height: 20px;
@@ -309,17 +499,111 @@
       display: block;
     }
 
+    /* Keyframes */
+
     @keyframes spin {
       to {
         transform: translateY(-50%) rotate(360deg);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes cardEntry {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes gentleWobble {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(0.5deg); }
+      75% { transform: rotate(-0.5deg); }
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Accessibility */
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .hero-img {
+        animation: none !important;
+      }
+
+      .pickup-item {
+        opacity: 1 !important;
+        animation: none !important;
+      }
+    }
+
+    /* Mobile */
+
+    @media (max-width: 480px) {
+      main {
+        padding: 0 16px 100px;
+      }
+
+      .hero {
+        padding-top: 32px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .schedule-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .schedule-actions {
+        width: 100%;
+      }
+
+      .schedule-actions .btn {
+        flex: 1;
+        justify-content: center;
       }
     }
     </style>
   </head>
   <body>
     <main>
-      <h1>Henteplan</h1>
-      <p class="tagline">Finn hentedager for avfall ved din adresse</p>
+      <section class="hero">
+        <div class="hero-illustration">
+          <img
+            src="/assets/hero.webp"
+            alt="Illustrasjon av et norsk nabolag med fargerike avfallsbeholdere"
+            class="hero-img"
+          >
+        </div>
+        <h1>Henteplan</h1>
+        <p class="tagline">Finn hentedager for avfall ved din adresse</p>
+      </section>
 
       <div class="search-wrap">
         <input
@@ -341,7 +625,7 @@
               type="button"
               class="btn"
               id="btn-copy"
-              title="Kopier abonnements-URL"
+              title="Kopier kalender-URL for abonnement"
             >
               <svg
                 width="14"
@@ -354,12 +638,12 @@
                 stroke-linejoin="round"
                 aria-hidden="true"
               >
-                <rect width="14" height="14" x="8" y="8" rx="2" />
-                <path
-                  d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
-                />
+                <rect width="18" height="18" x="3" y="4" rx="2" />
+                <path d="M16 2v4" />
+                <path d="M8 2v4" />
+                <path d="M3 10h18" />
               </svg>
-              Kopier URL
+              Abonner i kalender
             </button>
             <a
               class="btn btn-primary"
@@ -387,12 +671,46 @@
         </div>
         <div class="pickup-list" id="pickup-list"></div>
       </div>
+
+      <div class="openclaw-banner">
+        <div class="openclaw-banner-title">Bruker du OpenClaw?</div>
+        <p class="openclaw-banner-desc">
+          Installer Henteplan-skill og få avfallspåminnelser rett i chatten din.
+        </p>
+        <div class="openclaw-install">
+          <code>clawhub install henrikkvamme/henteplan</code>
+          <button type="button" class="openclaw-install-copy" id="btn-copy-install" title="Kopier kommando">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="14" height="14" x="8" y="8" rx="2" />
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+            </svg>
+          </button>
+        </div>
+        <a href="https://clawhub.ai/henrikkvamme/henteplan" target="_blank" rel="noopener" class="openclaw-link">
+          Se på ClawHub
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" x2="21" y1="14" y2="3" />
+          </svg>
+        </a>
+      </div>
     </main>
 
     <div class="toast" id="toast"></div>
 
     <footer>
       <a href="/docs">API-dokumentasjon</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/henrikkvamme/henteplan/actions/workflows/smoke-tests.yml" target="_blank" rel="noopener">
+        <img
+          src="https://github.com/henrikkvamme/henteplan/actions/workflows/smoke-tests.yml/badge.svg"
+          alt="Provider Smoke Tests"
+          style="vertical-align: middle; height: 20px;"
+        >
+      </a>
       &nbsp;&middot;&nbsp; Laget av folkene bak
       <a href="https://sambu.no" target="_blank" rel="noopener">sambu.no</a>
     </footer>
@@ -413,17 +731,46 @@
     let debounceTimer = null;
     let currentProvider = null;
     let currentLocationId = null;
+    let sessionToken = crypto.randomUUID();
+    let abortController = null;
+
+    const EMPTY_IMG = '/assets/empty-state.webp';
+
+    document.getElementById("btn-copy-install").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText("clawhub install henrikkvamme/henteplan");
+        showToast("Kommando kopiert!");
+      } catch {
+        showToast("Kunne ikke kopiere");
+      }
+    });
+
+    function showSkeleton() {
+      pickupListEl.innerHTML = Array.from({length: 4}, (_, i) =>
+        `<div class="skeleton-item" style="animation-delay:${i * 100}ms">
+          <div class="skeleton-dot"></div>
+          <div class="skeleton-bar skeleton-bar--long"></div>
+          <div class="skeleton-bar skeleton-bar--short"></div>
+        </div>`
+      ).join('');
+      scheduleTitleEl.textContent = 'Laster...';
+      scheduleEl.classList.add('visible');
+    }
+
+    function emptyHTML(msg) {
+      return `<div class="empty-state"><img src="${EMPTY_IMG}" alt="" class="empty-state-img">${esc(msg)}</div>`;
+    }
 
     searchInput.addEventListener("input", () => {
       clearTimeout(debounceTimer);
       const q = searchInput.value.trim();
-      if (q.length < 2) {
+      if (q.length < 3) {
         resultsEl.classList.remove("visible");
         spinnerEl.classList.remove("visible");
         return;
       }
       spinnerEl.classList.add("visible");
-      debounceTimer = setTimeout(() => searchAddresses(q), 300);
+      debounceTimer = setTimeout(() => fetchSuggestions(q), 300);
     });
 
     searchInput.addEventListener("focus", () => {
@@ -438,55 +785,144 @@
       }
     });
 
-    async function searchAddresses(q) {
+    async function fetchSuggestions(q) {
+      if (abortController) {
+        abortController.abort();
+      }
+      abortController = new AbortController();
+
       try {
-        const res = await fetch(
-          `${API}/api/v1/search?q=${encodeURIComponent(q)}`
-        );
+        const params = new URLSearchParams({
+          q,
+          session_token: sessionToken,
+        });
+        const res = await fetch(`${API}/api/internal/suggest?${params}`, {
+          signal: abortController.signal,
+        });
         const data = await res.json();
-        renderResults(data.results || []);
-      } catch {
-        renderResults([]);
+        renderSuggestions(data.suggestions || []);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          renderSuggestions([]);
+        }
       } finally {
-        spinnerEl.classList.remove("visible");
+        if (!abortController.signal.aborted) {
+          spinnerEl.classList.remove("visible");
+        }
       }
     }
 
-    function renderResults(results) {
+    function renderSuggestions(suggestions) {
       resultsEl.innerHTML = "";
-      if (results.length === 0) {
+      if (suggestions.length === 0) {
         resultsEl.classList.remove("visible");
         return;
       }
-      for (const r of results) {
+      for (const s of suggestions) {
         const div = document.createElement("div");
         div.className = "result-item";
-        div.innerHTML = `<span class="result-badge">${esc(r.provider)}</span><span>${esc(r.label)}</span>`;
-        div.addEventListener("click", () => selectAddress(r));
+        div.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+            style="flex-shrink:0;color:var(--text-muted)">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
+            <span style="font-weight:500">${esc(s.name)}</span>
+            <span style="font-size:12px;color:var(--text-muted)">${esc(s.place_formatted || "")}</span>
+          </span>`;
+        div.addEventListener("click", () => selectSuggestion(s));
         resultsEl.appendChild(div);
       }
       resultsEl.classList.add("visible");
     }
 
-    async function selectAddress(result) {
+    async function selectSuggestion(suggestion) {
       resultsEl.classList.remove("visible");
-      searchInput.value = result.label;
-      currentProvider = result.provider;
-      currentLocationId = result.locationId;
+      searchInput.value = suggestion.name;
+      spinnerEl.classList.add("visible");
+      scheduleEl.classList.remove("visible");
 
-      const icsUrl = `${API}/api/v1/schedule.ics?provider=${encodeURIComponent(currentProvider)}&locationId=${encodeURIComponent(currentLocationId)}`;
-      btnDownload.href = icsUrl;
+      showSkeleton();
 
       try {
-        const res = await fetch(
-          `${API}/api/v1/schedule?provider=${encodeURIComponent(result.provider)}&locationId=${encodeURIComponent(result.locationId)}`
+        const params = new URLSearchParams({ session_token: sessionToken });
+        const retrieveRes = await fetch(
+          `${API}/api/internal/retrieve/${suggestion.mapbox_id}?${params}`
         );
-        const data = await res.json();
-        renderSchedule(data.pickups || []);
+        const retrieveData = await retrieveRes.json();
+        const feature = (retrieveData.features || [])[0];
+
+        sessionToken = crypto.randomUUID();
+
+        if (!feature) {
+          showToast("Kunne ikke hente adressedetaljer");
+          spinnerEl.classList.remove("visible");
+          scheduleEl.classList.remove("visible");
+          return;
+        }
+
+        const postalCode = feature.properties?.context?.postcode?.name || "";
+        const city = feature.properties?.context?.place?.name || "";
+        const addressName = suggestion.name;
+
+        searchInput.value =
+          postalCode && city
+            ? `${addressName}, ${postalCode} ${city}`
+            : addressName;
+
+        const detectParams = new URLSearchParams();
+        if (postalCode) {
+          detectParams.set("postalCode", postalCode);
+        }
+        if (city) {
+          detectParams.set("city", city);
+        }
+
+        const detectRes = await fetch(`${API}/api/v1/detect?${detectParams}`);
+        const detectData = await detectRes.json();
+        const provider = detectData.provider;
+
+        if (!provider) {
+          pickupListEl.innerHTML = emptyHTML("Fant ingen renovasjonstjeneste for dette området.");
+          scheduleEl.classList.add("visible");
+          spinnerEl.classList.remove("visible");
+          return;
+        }
+
+        const searchParams = new URLSearchParams({
+          q: addressName,
+          provider: provider.id,
+        });
+        const searchRes = await fetch(`${API}/api/v1/search?${searchParams}`);
+        const searchData = await searchRes.json();
+        const results = searchData.results || [];
+
+        if (results.length === 0) {
+          pickupListEl.innerHTML = emptyHTML("Fant ingen treff hos renovasjonstjenesten. Prøv en annen adresse.");
+          scheduleEl.classList.add("visible");
+          spinnerEl.classList.remove("visible");
+          return;
+        }
+
+        const match = results[0];
+        currentProvider = match.provider;
+        currentLocationId = match.locationId;
+
+        const icsUrl = `${API}/api/v1/schedule.ics?provider=${encodeURIComponent(currentProvider)}&locationId=${encodeURIComponent(currentLocationId)}`;
+        btnDownload.href = icsUrl;
+
+        const scheduleRes = await fetch(
+          `${API}/api/v1/schedule?provider=${encodeURIComponent(currentProvider)}&locationId=${encodeURIComponent(currentLocationId)}`
+        );
+        const scheduleData = await scheduleRes.json();
+        renderSchedule(scheduleData.pickups || []);
       } catch {
-        pickupListEl.innerHTML =
-          '<div class="empty-state">Kunne ikke hente data. Prøv igjen.</div>';
+        pickupListEl.innerHTML = emptyHTML("Kunne ikke hente data. Prøv igjen.");
         scheduleEl.classList.add("visible");
+      } finally {
+        spinnerEl.classList.remove("visible");
       }
     }
 
@@ -495,13 +931,11 @@
       pickupListEl.innerHTML = "";
 
       if (pickups.length === 0) {
-        pickupListEl.innerHTML =
-          '<div class="empty-state">Ingen kommende hentinger funnet.</div>';
+        pickupListEl.innerHTML = emptyHTML("Ingen kommende hentinger funnet.");
         scheduleEl.classList.add("visible");
         return;
       }
 
-      // Group by date, show next occurrences per fraction
       const seen = new Map();
       for (const p of pickups) {
         if (!seen.has(p.fraction)) {
@@ -513,15 +947,18 @@
         a.date.localeCompare(b.date)
       );
 
+      let cardIndex = 0;
       for (const p of upcoming) {
         const div = document.createElement("div");
         div.className = "pickup-item";
+        div.style.animationDelay = `${cardIndex * 80}ms`;
         div.innerHTML = `
           <span class="pickup-dot" style="background:${esc(p.color)}"></span>
           <span class="pickup-fraction">${esc(p.fraction)}</span>
           <span class="pickup-date">${formatDate(p.date)}</span>
         `;
         pickupListEl.appendChild(div);
+        cardIndex++;
       }
 
       scheduleEl.classList.add("visible");
@@ -534,7 +971,7 @@
       const url = `${API}/api/v1/schedule.ics?provider=${encodeURIComponent(currentProvider)}&locationId=${encodeURIComponent(currentLocationId)}`;
       try {
         await navigator.clipboard.writeText(url);
-        showToast("URL kopiert til utklippstavlen");
+        showToast("Kalender-URL kopiert — lim inn i kalenderappen din");
       } catch {
         showToast("Kunne ikke kopiere");
       }

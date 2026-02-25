@@ -112,37 +112,18 @@ Norway has **356 municipalities**. This document tracks which are covered, which
   - Municipality list: `GET https://innherredrenovasjon.no/wp-json/ir/v1/municipalities`
 - **Municipalities:** Levanger, Verdal, Inderoy, Snasa, Malvik, Stjordal, Selbu, Tydal, Meraker, Frosta
 
----
+### Fosen Renovasjon
 
-## 2. Detection Rule Gaps
-
-These municipalities are **already supported** by existing provider APIs but need detection rules added (city names + postal code ranges in the provider detection logic):
-
-| Provider | Missing Municipalities | Status |
-|---|---|---|
-| **ReMidt** | Melhus, Skaun, Midtre Gauldal, Heim, Hitra, Froya, Rennebu, Rindal, Aure, Averoy, Tingvoll | API verified working for all |
-| **Innherred** | Malvik, Stjordal, Selbu, Tydal, Meraker, Frosta | API verified working for all |
-| **RfD** | Sigdal | Joined RfD in July 2021 |
-| **Avfall Sor** | Vennesla | Part of Avfall Sor service area |
-| **HIM** | Utsira | Likely covered (needs address verification) |
-| **IRIS Salten** | Hamaroy | Confirmed on IRIS website |
-
-**Total: ~19 municipalities unlocked by expanding detection rules alone.**
-
----
-
-## 3. New Providers — Feasible (Verified APIs)
-
-### Fosen Renovasjon IKS — TRIVIAL
-
-- **Municipalities:** Indre Fosen, Orland, Afjord (3)
-- **API:** renovasjonsportal.no REST JSON — **identical** to ReMidt, different subdomain
+- **ID:** `fosen`
+- **API:** renovasjonsportal.no REST JSON (same platform as ReMidt, different subdomain), no auth
 - **Endpoints:**
   - Address search: `GET https://fosen.renovasjonsportal.no/api/address/{query}`
   - Pickup calendar: `GET https://fosen.renovasjonsportal.no/api/address/{uuid}/year?calendarYear={year}`
-- **Auth:** None
-- **Effort:** Trivial — clone ReMidt with different base URL, or refactor both into a factory
-- **Verified:** Yes, all 3 municipalities tested and working
+- **Municipalities:** Indre Fosen, Orland, Afjord
+
+---
+
+## 2. New Providers — Feasible (Verified APIs)
 
 ### HRA (Hadeland og Ringerike Avfallsselskap) — MEDIUM
 
@@ -167,7 +148,7 @@ These municipalities are **already supported** by existing provider APIs but nee
 
 ---
 
-## 4. Norconsult Tommeplan Platform
+## 3. Norconsult Tommeplan Platform
 
 The **Norconsult Digital AS** Tommeplan platform is the single largest unlock opportunity. Multiple waste companies use the same proprietary app framework (`com.norconsult.tommeplan.*`). Reverse-engineering one APK would unlock all of them.
 
@@ -190,7 +171,7 @@ The **Norconsult Digital AS** Tommeplan platform is the single largest unlock op
 
 ---
 
-## 5. Other Proprietary/Difficult Providers
+## 4. Other Proprietary/Difficult Providers
 
 ### NGIR (Nordhordland) — Azure + SOAP
 
@@ -253,7 +234,7 @@ The **Norconsult Digital AS** Tommeplan platform is the single largest unlock op
 
 ---
 
-## 6. No Digital Infrastructure
+## 5. No Digital Infrastructure
 
 These municipalities have **no API and no feasible integration path** — only static PDF calendars or manual systems:
 
@@ -270,21 +251,20 @@ These municipalities have **no API and no feasible integration path** — only s
 
 ---
 
-## 7. Coverage Summary
+## 6. Coverage Summary
 
 | Category | Municipalities | Count |
 |---|---|---|
-| Implemented providers | All listed in Section 1 | ~243 |
-| Detection rule gaps (easy fix) | Section 2 | +19 |
-| Feasible new providers | Fosen (3) + HRA (5) + SIM (7) | +15 |
-| Norconsult platform (1 reverse-eng.) | Section 4 | +32 |
-| Other proprietary (hard) | Section 5 | +35 |
-| No digital infrastructure | Section 6 | 8 |
+| Implemented providers | All listed in Section 1 (incl. Fosen + expanded detection) | ~265 |
+| Feasible new providers | HRA (5) + SIM (7) | +12 |
+| Norconsult platform (1 reverse-eng.) | Section 3 | +32 |
+| Other proprietary (hard) | Section 4 | +35 |
+| No digital infrastructure | Section 5 | 8 |
 | **Theoretical maximum** | | **~352 of 356** |
 
 ---
 
-## 8. Norkart Customer Municipalities
+## 7. Norkart Customer Municipalities
 
 Companies previously investigated and confirmed to use the Norkart/MinRenovasjon platform (already covered via the `norkart` provider):
 

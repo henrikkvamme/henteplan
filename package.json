@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
+    "test": "bun test src/tests/unit src/tests/integration",
+    "test:smoke": "bun test src/tests/e2e --timeout 120000",
+    "test:all": "bun test src/tests --timeout 120000",
     "check": "bunx biome check src/",
     "fix": "bunx biome check --fix src/",
     "typecheck": "tsc --noEmit"

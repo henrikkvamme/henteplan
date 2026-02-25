@@ -14,6 +14,11 @@ const PROVIDER_RULES: ProviderRule[] = [
     postalRanges: [[7000, 7099]],
   },
   {
+    id: "fosen",
+    cities: ["indre fosen", "orland", "ørland", "afjord", "åfjord"],
+    postalRanges: [[7100, 7180]],
+  },
+  {
     id: "bir",
     cities: [
       "bergen",
@@ -43,8 +48,11 @@ const PROVIDER_RULES: ProviderRule[] = [
   },
   {
     id: "avfallsor",
-    cities: ["kristiansand"],
-    postalRanges: [[4600, 4699]],
+    cities: ["kristiansand", "vennesla"],
+    postalRanges: [
+      [4600, 4699],
+      [4700, 4715],
+    ],
   },
   {
     id: "him",
@@ -57,6 +65,7 @@ const PROVIDER_RULES: ProviderRule[] = [
       "bokn",
       "vindafjord",
       "etne",
+      "utsira",
     ],
     postalRanges: [[5500, 5599]],
   },
@@ -71,10 +80,26 @@ const PROVIDER_RULES: ProviderRule[] = [
       "oppdal",
       "smola",
       "smøla",
+      "melhus",
+      "skaun",
+      "midtre gauldal",
+      "heim",
+      "hitra",
+      "froya",
+      "frøya",
+      "rennebu",
+      "rindal",
+      "aure",
+      "averoy",
+      "averøy",
+      "tingvoll",
     ],
     postalRanges: [
       [6400, 6499],
-      [6500, 6549],
+      [6500, 6699],
+      [7224, 7299],
+      [7332, 7340],
+      [7540, 7549],
     ],
   },
   {
@@ -97,13 +122,21 @@ const PROVIDER_RULES: ProviderRule[] = [
       "meloy",
       "meløy",
       "beiarn",
+      "hamaroy",
+      "hamarøy",
     ],
-    postalRanges: [[8000, 8099]],
+    postalRanges: [
+      [8000, 8099],
+      [8290, 8299],
+    ],
   },
   {
     id: "rfd",
-    cities: ["drammen", "lier", "øvre eiker", "ovre eiker", "modum"],
-    postalRanges: [[3000, 3099]],
+    cities: ["drammen", "lier", "øvre eiker", "ovre eiker", "modum", "sigdal"],
+    postalRanges: [
+      [3000, 3099],
+      [3350, 3359],
+    ],
   },
   {
     id: "renovasjonen",
@@ -115,8 +148,23 @@ const PROVIDER_RULES: ProviderRule[] = [
   },
   {
     id: "innherred",
-    cities: ["levanger", "verdal", "inderoy", "inderøy", "snasa", "snåsa"],
-    postalRanges: [[7600, 7699]],
+    cities: [
+      "levanger",
+      "verdal",
+      "inderoy",
+      "inderøy",
+      "snasa",
+      "snåsa",
+      "malvik",
+      "stjordal",
+      "stjørdal",
+      "selbu",
+      "tydal",
+      "meraker",
+      "meråker",
+      "frosta",
+    ],
+    postalRanges: [[7500, 7699]],
   },
 ];
 

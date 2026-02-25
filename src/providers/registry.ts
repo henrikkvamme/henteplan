@@ -1,5 +1,6 @@
 import { avfallsorProvider } from "./avfallsor";
 import { birProvider } from "./bir";
+import { fosenProvider } from "./fosen";
 import { frevarProvider } from "./frevar";
 import { himProvider } from "./him";
 import { innherredProvider } from "./innherred";
@@ -20,6 +21,7 @@ const PROVIDERS: Record<string, WasteProvider> = {
   avfallsor: avfallsorProvider,
   him: himProvider,
   remidt: remidtProvider,
+  fosen: fosenProvider,
   frevar: frevarProvider,
   iris: irisProvider,
   rfd: rfdProvider,
