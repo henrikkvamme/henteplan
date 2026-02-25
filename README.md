@@ -25,6 +25,7 @@
 - **265+ municipalities** covered across Norway
 - **iCal feeds** — subscribe in any calendar app
 - **Auto-detect** — resolve provider from address or postal code
+- **Self-healing CI** — when smoke tests fail, [Claude Code](https://claude.ai/code) automatically diagnoses and patches broken providers
 
 ---
 
