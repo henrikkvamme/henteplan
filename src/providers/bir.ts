@@ -110,11 +110,13 @@ async function getPickups(locationId: string) {
   const data = (await res.json()) as BirPickupEntry[];
 
   const pickups = normalizePickups(
-    data.map((e) => ({
-      date: e.Dato.slice(0, 10),
-      fraction: e.Fraksjon,
-      fractionId: String(e.FraksjonId),
-    }))
+    data
+      .filter((e) => e.Dato != null)
+      .map((e) => ({
+        date: e.Dato.slice(0, 10),
+        fraction: e.Fraksjon,
+        fractionId: String(e.FraksjonId),
+      }))
   );
 
   setCache(cacheKey, pickups);

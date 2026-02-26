@@ -58,7 +58,7 @@ async function getPickups(locationId: string) {
 
   const today = new Date().toISOString().slice(0, 10);
   const pickups = normalizePickups(
-    data.collections
+    (data.collections ?? [])
       .flatMap((c) => c.items)
       .filter((item) => item.dato >= today)
       .map((item) => ({

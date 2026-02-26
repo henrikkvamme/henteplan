@@ -4,9 +4,21 @@ import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface OsloService {
   Fraksjon: { Id: number; Tekst: string };
-  Hyppighet: string;
+  Hyppighet: { Faktor: number; Tekst: string };
   TommeDato: string;
   TommeUkedag: string;
+}
+
+interface OsloHentePunkt {
+  Tjenester: OsloService[];
+}
+
+interface OsloResult {
+  HentePunkts: OsloHentePunkt[];
+}
+
+interface OsloResponse {
+  result: OsloResult[];
 }
 
 interface GeonorgeAddress {
@@ -111,13 +123,16 @@ async function getPickups(locationId: string) {
   if (!res.ok) {
     throw new Error(`Oslo calendar fetch failed: ${res.status}`);
   }
-  const services = (await res.json()) as OsloService[];
+  const data = (await res.json()) as OsloResponse;
+  const services = data.result.flatMap((r) =>
+    r.HentePunkts.flatMap((hp) => hp.Tjenester)
+  );
 
   const today = new Date().toISOString().slice(0, 10);
   const pickups = normalizePickups(
     services.flatMap((svc) => {
       const nextDateIso = parseOsloDate(svc.TommeDato);
-      const dates = generateOsloDates(nextDateIso, svc.Hyppighet);
+      const dates = generateOsloDates(nextDateIso, svc.Hyppighet.Tekst);
       return dates
         .filter((d) => d >= today)
         .map((d) => ({
