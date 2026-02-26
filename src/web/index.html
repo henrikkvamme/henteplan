@@ -8,6 +8,35 @@
       name="description"
       content="Søk opp adressen din og finn hentedager for avfall. Legg til i kalenderen din med ett klikk."
     >
+    <link rel="canonical" href="https://henteplan.no">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#2A7C6F">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Henteplan">
+    <meta property="og:title" content="Henteplan — Finn din renovasjonskalender">
+    <meta property="og:description" content="Søk opp adressen din og finn hentedager for avfall. Legg til i kalenderen din med ett klikk.">
+    <meta property="og:url" content="https://henteplan.no">
+    <meta property="og:image" content="https://henteplan.no/assets/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Henteplan — norsk renovasjonskalender med fargerike avfallsbeholdere">
+    <meta property="og:locale" content="nb_NO">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Henteplan — Finn din renovasjonskalender">
+    <meta name="twitter:description" content="Søk opp adressen din og finn hentedager for avfall. Legg til i kalenderen din med ett klikk.">
+    <meta name="twitter:image" content="https://henteplan.no/assets/og.png">
+    <meta name="twitter:image:alt" content="Henteplan — norsk renovasjonskalender med fargerike avfallsbeholdere">
+
+    <!-- Favicons -->
+    <link rel="icon" href="/assets/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -591,10 +620,50 @@
       }
     }
     </style>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Henteplan",
+          "url": "https://henteplan.no",
+          "description": "Søk opp adressen din og finn hentedager for avfall. Legg til i kalenderen din med ett klikk.",
+          "applicationCategory": "UtilityApplication",
+          "inLanguage": "nb",
+          "isAccessibleForFree": true,
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "NOK"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://henteplan.no/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "name": "Henteplan",
+          "url": "https://henteplan.no",
+          "inLanguage": "nb",
+          "description": "Norsk renovasjonskalender — finn hentedager for avfall ved din adresse."
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <main>
-      <section class="hero">
+      <noscript>
+        <div style="padding:48px 24px;text-align:center;max-width:640px;margin:0 auto">
+          <h1>Henteplan</h1>
+          <p style="margin:12px 0">Finn hentedager for avfall ved din adresse. Denne tjenesten krever JavaScript.</p>
+          <p><a href="/docs">API-dokumentasjon</a> · <a href="https://github.com/henrikkvamme/henteplan">GitHub</a></p>
+        </div>
+      </noscript>
+      <header class="hero">
         <div class="hero-illustration">
           <img
             src="/assets/hero.webp"
@@ -604,9 +673,9 @@
         </div>
         <h1>Henteplan</h1>
         <p class="tagline">Finn hentedager for avfall ved din adresse</p>
-      </section>
+      </header>
 
-      <div class="search-wrap">
+      <div class="search-wrap" role="search" aria-label="Adressesøk">
         <input
           type="text"
           class="search-input"
@@ -618,7 +687,7 @@
         <div class="results-dropdown" id="results"></div>
       </div>
 
-      <div class="schedule" id="schedule">
+      <section class="schedule" id="schedule" aria-label="Henteplan">
         <div class="schedule-header">
           <span class="schedule-title" id="schedule-title"></span>
           <div class="schedule-actions">
@@ -671,7 +740,7 @@
           </div>
         </div>
         <div class="pickup-list" id="pickup-list"></div>
-      </div>
+      </section>
 
       <div class="openclaw-banner">
         <div class="openclaw-banner-title">Bruker du OpenClaw?</div>
@@ -703,17 +772,19 @@
     <div class="toast" id="toast"></div>
 
     <footer>
-      <a href="/docs">API-dokumentasjon</a>
-      &nbsp;&middot;&nbsp;
-      <a href="https://github.com/henrikkvamme/henteplan/actions/workflows/smoke-tests.yml" target="_blank" rel="noopener">
-        <img
-          src="https://github.com/henrikkvamme/henteplan/actions/workflows/smoke-tests.yml/badge.svg"
-          alt="Provider Smoke Tests"
-          style="vertical-align: middle; height: 20px;"
-        >
-      </a>
-      &nbsp;&middot;&nbsp; Laget av folkene bak
-      <a href="https://sambu.no" target="_blank" rel="noopener">sambu.no</a>
+      <nav aria-label="Bunnnavigasjon">
+        <a href="/docs">API-dokumentasjon</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://github.com/henrikkvamme/henteplan/actions/workflows/smoke-tests.yml" target="_blank" rel="noopener">
+          <img
+            src="https://github.com/henrikkvamme/henteplan/actions/workflows/smoke-tests.yml/badge.svg"
+            alt="Provider Smoke Tests"
+            style="vertical-align: middle; height: 20px;"
+          >
+        </a>
+        &nbsp;&middot;&nbsp; Laget av folkene bak
+        <a href="https://sambu.no" target="_blank" rel="noopener">sambu.no</a>
+      </nav>
     </footer>
 
     <script>

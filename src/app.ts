@@ -10,6 +10,7 @@ import { icalRoute } from "./routes/ical";
 import { providersRoute } from "./routes/providers";
 import { scheduleRoute } from "./routes/schedule";
 import { searchRoute } from "./routes/search";
+import { seoRoutes } from "./routes/seo";
 
 export function createApp() {
   const app = new OpenAPIHono();
@@ -36,6 +37,9 @@ export function createApp() {
 
   // Internal routes (server-side Mapbox proxy for web interface)
   app.route("/", geocodeRoute);
+
+  // SEO routes (robots.txt, sitemap, llms.txt, manifest, etc.)
+  app.route("/", seoRoutes);
 
   // OpenAPI spec
   app.doc("/openapi.json", {
