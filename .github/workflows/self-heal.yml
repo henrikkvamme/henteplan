@@ -38,6 +38,7 @@ jobs:
           else
             echo "result=fail" >> "$GITHUB_OUTPUT"
           fi
+          grep -oP '(?<=\(fail\) provider: )\w+' test-output.txt | sort -u > /tmp/failing-providers-before.txt || true
         env:
           HENTEPLAN_API_KEY: ${{ secrets.HENTEPLAN_API_KEY }}
 
@@ -85,13 +86,28 @@ jobs:
       - name: Verify fix with smoke tests
         if: steps.retest.outputs.result == 'fail' && steps.check-pr.outputs.skip != 'true'
         id: verify
-        continue-on-error: true
-        run: bun test src/tests/e2e --timeout 120000
+        run: |
+          bun test src/tests/e2e --timeout 120000 2>&1 | tee verify-output.txt || true
+          grep -oP '(?<=\(fail\) provider: )\w+' verify-output.txt | sort -u > /tmp/failing-providers-after.txt || true
+          # Check if any NEW providers started failing after the agent's changes
+          NEW_FAILURES=$(comm -13 /tmp/failing-providers-before.txt /tmp/failing-providers-after.txt)
+          # Check if at least one provider was fixed
+          FIXED=$(comm -23 /tmp/failing-providers-before.txt /tmp/failing-providers-after.txt)
+          if [ -n "$NEW_FAILURES" ]; then
+            echo "Agent introduced new failures: $NEW_FAILURES"
+            echo "result=worse" >> "$GITHUB_OUTPUT"
+          elif [ -n "$FIXED" ]; then
+            echo "Agent fixed providers: $FIXED"
+            echo "result=improved" >> "$GITHUB_OUTPUT"
+          else
+            echo "No improvement — same providers still failing"
+            echo "result=unchanged" >> "$GITHUB_OUTPUT"
+          fi
         env:
           HENTEPLAN_API_KEY: ${{ secrets.HENTEPLAN_API_KEY }}
 
       - name: Create PR if fix passes
-        if: steps.verify.outcome == 'success'
+        if: steps.verify.outputs.result == 'improved'
         run: |
           BRANCH="auto-heal/$(date +%Y%m%d-%H%M%S)"
           git checkout -b "$BRANCH"
@@ -130,7 +146,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify on failure
-        if: steps.verify.outcome == 'failure'
+        if: steps.verify.outputs.result == 'worse' || steps.verify.outputs.result == 'unchanged'
         run: echo "Auto-heal failed — manual intervention needed. See workflow run for details."
 
       - name: Notify on skip (transient)
