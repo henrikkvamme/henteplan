@@ -32,6 +32,7 @@ jobs:
       - name: Re-run smoke tests and capture output
         id: retest
         run: |
+          set -o pipefail
           if bun test src/tests/e2e --timeout 120000 2>&1 | tee test-output.txt; then
             echo "result=pass" >> "$GITHUB_OUTPUT"
           else
