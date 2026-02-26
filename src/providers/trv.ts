@@ -22,7 +22,7 @@ const meta: ProviderMeta = {
 };
 
 async function searchAddress(query: string): Promise<AddressMatch[]> {
-  const url = `https://trv.no/wp-json/wasteplan/v3/adress?s=${encodeURIComponent(query)}`;
+  const url = `https://trv.no/wp-json/wasteplan/v2/adress?s=${encodeURIComponent(query)}`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`TRV address search failed: ${res.status}`);

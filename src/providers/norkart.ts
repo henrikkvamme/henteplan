@@ -14,8 +14,8 @@ const NORKART_PROXY =
 const NORKART_API = "https://komteksky.norkart.no/MinRenovasjon.Api/api";
 
 interface NorkartCustomer {
-  Kommunenavn: string;
-  Kommunenr: number;
+  Name: string;
+  Number: string;
 }
 
 interface GeonorgeAddress {
@@ -58,7 +58,9 @@ export async function getNorkartCustomerNames(): Promise<string[]> {
     throw new Error(`Norkart customer list failed: ${res.status}`);
   }
   const customers = (await res.json()) as NorkartCustomer[];
-  const names = customers.map((c) => c.Kommunenavn.toLowerCase());
+  const names = customers
+    .filter((c) => c.Name != null)
+    .map((c) => c.Name.toLowerCase());
 
   setCacheGeneric("norkart:customers", names, CUSTOMER_CACHE_TTL);
   return names;
@@ -140,7 +142,10 @@ async function getPickups(locationId: string) {
   if (!calRes.ok) {
     throw new Error(`Norkart calendar fetch failed: ${calRes.status}`);
   }
-  const calendar = (await calRes.json()) as NorkartCalendarEntry[];
+  const calBody = (await calRes.json()) as
+    | NorkartCalendarEntry[]
+    | { Tommedatoer: NorkartCalendarEntry[] };
+  const calendar = Array.isArray(calBody) ? calBody : calBody.Tommedatoer;
 
   const today = from;
   const pickups = normalizePickups(

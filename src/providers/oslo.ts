@@ -111,21 +111,26 @@ async function getPickups(locationId: string) {
   if (!res.ok) {
     throw new Error(`Oslo calendar fetch failed: ${res.status}`);
   }
-  const services = (await res.json()) as OsloService[];
+  const body = (await res.json()) as
+    | OsloService[]
+    | { result: OsloService[] };
+  const services = Array.isArray(body) ? body : body.result;
 
   const today = new Date().toISOString().slice(0, 10);
   const pickups = normalizePickups(
-    services.flatMap((svc) => {
-      const nextDateIso = parseOsloDate(svc.TommeDato);
-      const dates = generateOsloDates(nextDateIso, svc.Hyppighet);
-      return dates
-        .filter((d) => d >= today)
-        .map((d) => ({
-          date: d,
-          fraction: svc.Fraksjon.Tekst,
-          fractionId: String(svc.Fraksjon.Id),
-        }));
-    })
+    services
+      .filter((svc) => svc.TommeDato && svc.Fraksjon)
+      .flatMap((svc) => {
+        const nextDateIso = parseOsloDate(svc.TommeDato);
+        const dates = generateOsloDates(nextDateIso, svc.Hyppighet);
+        return dates
+          .filter((d) => d >= today)
+          .map((d) => ({
+            date: d,
+            fraction: svc.Fraksjon.Tekst,
+            fractionId: String(svc.Fraksjon.Id),
+          }));
+      })
   );
 
   pickups.sort((a, b) => a.date.localeCompare(b.date));

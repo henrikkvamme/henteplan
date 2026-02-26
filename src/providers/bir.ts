@@ -9,9 +9,9 @@ interface BirAddressResult {
 }
 
 interface BirPickupEntry {
-  Dato: string;
-  Fraksjon: string;
-  FraksjonId: number;
+  dato: string;
+  fraksjon: string;
+  fraksjonId: number;
 }
 
 // noinspection SpellCheckingInspection
@@ -111,9 +111,9 @@ async function getPickups(locationId: string) {
 
   const pickups = normalizePickups(
     data.map((e) => ({
-      date: e.Dato.slice(0, 10),
-      fraction: e.Fraksjon,
-      fractionId: String(e.FraksjonId),
+      date: e.dato.slice(0, 10),
+      fraction: e.fraksjon,
+      fractionId: String(e.fraksjonId),
     }))
   );
 
