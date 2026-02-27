@@ -19,6 +19,7 @@
     "hono-rate-limiter": "^0.4.2",
     "ical-generator": "^8.0.0",
     "node-html-parser": "^7.0.1",
+    "posthog-node": "^5.26.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

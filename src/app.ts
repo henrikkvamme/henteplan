@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
+import { analytics } from "./middleware/analytics";
 import { apiKeyAuth } from "./middleware/api-key";
 import { errorHandler } from "./middleware/error-handler";
 import { rateLimiter } from "./middleware/rate-limit";
@@ -18,6 +19,9 @@ export function createApp() {
   // Global middleware
   app.use("*", cors());
   app.onError(errorHandler);
+
+  // Analytics
+  app.use("/api/v1/*", analytics());
 
   // API key auth — sets "trusted" flag to bypass rate limits
   app.use("/api/v1/*", apiKeyAuth());
