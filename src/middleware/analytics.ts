@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from "hono";
-import { capture } from "@/analytics/posthog";
+import { capture } from "../analytics/posthog";
 
 export function analytics(): MiddlewareHandler {
 	return async (c, next) => {
