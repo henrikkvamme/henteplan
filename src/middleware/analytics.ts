@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from "hono";
-import { posthog } from "@/analytics/posthog";
+import { capture } from "@/analytics/posthog";
 
 export function analytics(): MiddlewareHandler {
 	return async (c, next) => {
@@ -9,17 +9,13 @@ export function analytics(): MiddlewareHandler {
 		const path = new URL(c.req.url).pathname;
 		const query = c.req.query();
 
-		posthog.capture({
-			distinctId: c.req.header("x-forwarded-for") ?? "anonymous",
-			event: "api_request",
-			properties: {
-				path,
-				method: c.req.method,
-				status: c.res.status,
-				duration_ms: Date.now() - start,
-				provider: query.provider,
-				user_agent: c.req.header("user-agent"),
-			},
+		capture(c.req.header("x-forwarded-for") ?? "anonymous", "api_request", {
+			path,
+			method: c.req.method,
+			status: c.res.status,
+			duration_ms: Date.now() - start,
+			provider: query.provider,
+			user_agent: c.req.header("user-agent"),
 		});
 	};
 }
