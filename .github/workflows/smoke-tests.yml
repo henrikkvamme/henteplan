@@ -14,7 +14,9 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Run smoke tests
-        run: bun test src/tests/e2e --timeout 120000 2>&1 | tee test-output.txt
+        run: |
+          set -o pipefail
+          bun test src/tests/e2e --timeout 120000 2>&1 | tee test-output.txt
         continue-on-error: true
         id: smoke
         env:
