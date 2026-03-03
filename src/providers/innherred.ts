@@ -49,6 +49,10 @@ async function getPickups(locationId: string) {
   const url = `https://innherredrenovasjon.no/wp-json/ir/v1/garbage-disposal-dates-by-address?address=${encodeURIComponent(locationId)}&days=365`;
   const res = await fetch(url);
   if (!res.ok) {
+    // The API returns 404 when an address has no disposal dates registered
+    if (res.status === 404) {
+      return [];
+    }
     throw new Error(`Innherred calendar fetch failed: ${res.status}`);
   }
 

@@ -77,7 +77,20 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
   if (!res.ok) {
     throw new Error(`BIR address search failed: ${res.status}`);
   }
-  const data = (await res.json()) as BirAddressResult[];
+  let data = (await res.json()) as BirAddressResult[];
+
+  // If no results, retry without house number (e.g. "Torgallmenningen 1" → "Torgallmenningen")
+  if (data.length === 0) {
+    const stripped = query.replace(/\s+\d+\s*\w?$/, "").trim();
+    if (stripped && stripped !== query) {
+      const retryUrl = `https://bir.no/api/search/AddressSearch?q=${encodeURIComponent(stripped)}&s=false`;
+      const retryRes = await fetch(retryUrl);
+      if (retryRes.ok) {
+        data = (await retryRes.json()) as BirAddressResult[];
+      }
+    }
+  }
+
   return data.map((item) => ({
     locationId: item.Id,
     label: [item.Title, item.SubTitle].filter(Boolean).join(", "),
