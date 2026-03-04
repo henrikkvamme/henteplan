@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <a href="https://henteplan.no/docs"><b>API Docs</b></a> · <a href="https://henteplan.no">Web App</a> · <a href="docs/PROVIDERS.md">Provider Coverage</a>
+  <a href="https://henteplan.no/docs"><b>API Docs</b></a> · <a href="https://henteplan.no">Web App</a> · <a href="docs/PROVIDERS.md">Provider Coverage</a> · <a href="docs/INTEGRATIONS.md">Integrasjoner</a>
 </p>
 
 ---
@@ -72,6 +72,10 @@ Interactive docs at [henteplan.no/docs](https://henteplan.no/docs).
 See [`docs/PROVIDERS.md`](docs/PROVIDERS.md) for detailed coverage analysis.
 
 </details>
+
+## Integrasjoner
+
+iCal-feeden fungerer med Home Assistant, Google Calendar, Apple Calendar, Outlook og andre tjenester som støtter iCal-abonnement. Se [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) for oppsettguider.
 
 ## Setup
 
