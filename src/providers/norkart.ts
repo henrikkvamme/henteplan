@@ -74,28 +74,111 @@ const meta: ProviderMeta = {
   postalRanges: [],
 };
 
+const GEONORGE_FILTER =
+  "adresser.kommunenummer,adresser.adressenavn,adresser.adressekode,adresser.nummer,adresser.kommunenavn,adresser.postnummer,adresser.poststed";
+
+function toAddressMatches(addresses: GeonorgeAddress[]): AddressMatch[] {
+  return addresses.map((a) => ({
+    locationId: `${a.kommunenummer}|${a.adressenavn}|${a.adressekode}|${a.nummer}`,
+    label: `${a.adressenavn} ${a.nummer}, ${a.postnummer} ${a.poststed} (${a.kommunenavn})`,
+  }));
+}
+
+async function geonorgeSok(
+  params: Record<string, string>
+): Promise<GeonorgeAddress[]> {
+  const searchParams = new URLSearchParams({
+    ...params,
+    filtrer: GEONORGE_FILTER,
+  });
+  const res = await fetch(
+    `https://ws.geonorge.no/adresser/v1/sok?${searchParams.toString()}`
+  );
+  if (!res.ok) return [];
+  const data = (await res.json()) as GeonorgeResponse;
+  return data.adresser;
+}
+
+function detectMunicipality(
+  query: string,
+  customers: string[]
+): { municipality: string; addressPart: string } | null {
+  const words = query.trim().split(/\s+/);
+  // Try matching last 2 words, then last 1 word against customer list
+  for (let n = Math.min(2, words.length - 1); n >= 1; n--) {
+    const candidate = words.slice(-n).join(" ").toLowerCase();
+    if (customers.includes(candidate)) {
+      return {
+        municipality: words.slice(-n).join(" "),
+        addressPart: words.slice(0, -n).join(" "),
+      };
+    }
+  }
+  return null;
+}
+
 async function searchAddress(query: string): Promise<AddressMatch[]> {
   const customers = await getNorkartCustomerNames();
 
-  const params = new URLSearchParams({
-    sok: query,
-    filtrer:
-      "adresser.kommunenummer,adresser.adressenavn,adresser.adressekode,adresser.nummer,adresser.kommunenavn,adresser.postnummer,adresser.poststed",
-  });
-  const res = await fetch(
-    `https://ws.geonorge.no/adresser/v1/sok?${params.toString()}`
+  // Step 1: Exact search with fuzzy matching
+  const addresses = await geonorgeSok({ sok: query, fuzzy: "true" });
+  const filtered = addresses.filter((a) =>
+    customers.includes(a.kommunenavn.toLowerCase())
   );
-  if (!res.ok) {
-    throw new Error(`Norkart address search failed: ${res.status}`);
+  if (filtered.length > 0) {
+    return toAddressMatches(filtered);
   }
-  const data = (await res.json()) as GeonorgeResponse;
 
-  return data.adresser
-    .filter((a) => customers.includes(a.kommunenavn.toLowerCase()))
-    .map((a) => ({
-      locationId: `${a.kommunenummer}|${a.adressenavn}|${a.adressekode}|${a.nummer}`,
-      label: `${a.adressenavn} ${a.nummer}, ${a.postnummer} ${a.poststed} (${a.kommunenavn})`,
-    }));
+  // Step 2: Detect municipality name in query and use structured search
+  const detected = detectMunicipality(query, customers);
+  if (!detected) return [];
+
+  const { municipality, addressPart } = detected;
+  // Try with full address part (e.g. "Storgata 1")
+  const step2 = await geonorgeSok({
+    sok: addressPart,
+    kommunenavn: municipality,
+    fuzzy: "true",
+  });
+  const filtered2 = step2.filter((a) =>
+    customers.includes(a.kommunenavn.toLowerCase())
+  );
+  if (filtered2.length > 0) {
+    return toAddressMatches(filtered2);
+  }
+
+  // Step 3: Try without house number (e.g. "Storgata")
+  const streetOnly = addressPart.replace(/\s+\d+\s*$/, "").trim();
+  if (streetOnly && streetOnly !== addressPart) {
+    const step3 = await geonorgeSok({
+      sok: streetOnly,
+      kommunenavn: municipality,
+      fuzzy: "true",
+    });
+    const filtered3 = step3.filter((a) =>
+      customers.includes(a.kommunenavn.toLowerCase())
+    );
+    if (filtered3.length > 0) {
+      return toAddressMatches(filtered3);
+    }
+  }
+
+  // Step 4: Wildcard prefix search on street name
+  if (streetOnly && streetOnly.length >= 4) {
+    const prefix = streetOnly.substring(0, 4);
+    const step4 = await geonorgeSok({
+      "adressenavn": `${prefix}*`,
+      kommunenavn: municipality,
+    });
+    const filtered4 = step4.filter((a) =>
+      customers.includes(a.kommunenavn.toLowerCase())
+    );
+    if (filtered4.length > 0) {
+      return toAddressMatches(filtered4);
+    }
+  }
+
+  return [];
 }
 
 // noinspection MagicNumber

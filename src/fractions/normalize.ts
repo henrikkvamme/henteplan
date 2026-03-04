@@ -9,6 +9,7 @@ const FRACTION_MAP: Record<string, FractionCategory> = {
 
   // Paper
   papir: "paper",
+  "papir og papp": "paper",
   "papp og papir": "paper",
   "papp- og papiravfall": "paper",
   "papir og plast": "paper",
@@ -21,6 +22,7 @@ const FRACTION_MAP: Record<string, FractionCategory> = {
 
   // Food/organic
   matavfall: "food",
+  "matavfall uten hageavfall": "food",
   bioavfall: "food",
   mat: "food",
 
