@@ -22,7 +22,10 @@ const meta: ProviderMeta = {
 };
 
 async function searchAddress(query: string): Promise<AddressMatch[]> {
-  const url = `https://trv.no/wp-json/wasteplan/v2/adress?s=${encodeURIComponent(query)}`;
+  // TRV's API uses ASCII-only street names (e.g. "Lade Alle" not "Lade allé"),
+  // so strip diacritics from the query to ensure matches.
+  const normalized = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const url = `https://trv.no/wp-json/wasteplan/v2/adress?s=${encodeURIComponent(normalized)}`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`TRV address search failed: ${res.status}`);
