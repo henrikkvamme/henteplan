@@ -29,6 +29,7 @@ Common failure modes:
 3. **Auth mechanism changed** — Provider added or changed authentication. Symptoms: 401, 403 errors.
 4. **HTML structure changed** (scraping providers like `renovasjonen`) — CSS selectors or HTML tags changed. Symptoms: empty results, parsing errors.
 5. **Provider temporarily down** — Symptoms: 500/502/503 errors, timeouts, ECONNREFUSED.
+6. **Stale test address** — A test address was removed from the provider's database (e.g. demolished building, address renaming). Symptoms: `searchAddress` returns empty results for one specific address while other addresses for the same provider work fine. The provider code is correct — only the test fixture needs updating.
 
 ## Step 4: Investigate with Playwright (if needed)
 
@@ -77,12 +78,21 @@ bun run /tmp/investigate.ts
 ## Step 5: Apply the fix
 
 **Constraints — you MUST follow these:**
-- Only modify files in `src/providers/` and `src/fractions/`
+- Only modify files in `src/providers/`, `src/fractions/`, and `src/tests/setup.ts`
 - Do NOT add new dependencies (no changes to `package.json`)
-- Do NOT modify test files (`src/tests/`)
+- Do NOT modify test logic or assertions (`src/tests/e2e/`, `src/tests/unit/`)
 - Do NOT weaken test assertions or change expected behavior
 - Keep changes minimal — fix only what's broken
 - Match the existing code style
+
+### Fixing stale test addresses
+
+If the root cause is a stale address in `src/tests/setup.ts` (failure mode 6):
+1. Confirm by calling the provider's `searchAddress` API directly with the failing address — it should return empty results
+2. Verify that other test addresses for the same provider still work
+3. Find a replacement address by trying well-known street names in the provider's coverage area (e.g. `Storgata 1`, `Kirkegata 1`, `Kongens gate 1`) against the provider's API
+4. Replace the stale address in the provider's address list in `src/tests/setup.ts`
+5. Keep the same number of test addresses — replace, don't remove
 
 ## Step 6: Verify the fix
 
@@ -100,7 +110,7 @@ If the provider appears to be **temporarily down** (500 errors, timeouts, connec
 - Write a brief summary to stdout explaining the situation
 - Exit cleanly
 
-If the failure requires **changes you cannot make** (new dependency, fundamental API redesign, test changes):
+If the failure requires **changes you cannot make** (new dependency, fundamental API redesign, test logic changes):
 - Do NOT make any code changes
 - Write a brief summary to stdout explaining what would be needed
 - Exit cleanly

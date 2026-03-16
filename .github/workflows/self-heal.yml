@@ -111,7 +111,7 @@ jobs:
         run: |
           BRANCH="auto-heal/$(date +%Y%m%d-%H%M%S)"
           git checkout -b "$BRANCH"
-          git add src/providers/ src/fractions/
+          git add src/providers/ src/fractions/ src/tests/setup.ts
           if git diff --cached --quiet; then
             echo "No changes to commit — agent likely detected a transient issue."
             exit 0
