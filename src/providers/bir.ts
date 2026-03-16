@@ -1,5 +1,5 @@
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface BirAddressResult {
@@ -98,40 +98,33 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
 }
 
 // noinspection MagicNumber
-async function getPickups(locationId: string) {
-  const cacheKey = `bir:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
+function getPickups(locationId: string) {
+  return withFallback(`bir:${locationId}`, async () => {
+    const token = await getBirToken();
 
-  const token = await getBirToken();
+    const now = new Date();
+    const from = now.toISOString().slice(0, 10);
+    const to = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
 
-  const now = new Date();
-  const from = now.toISOString().slice(0, 10);
-  const to = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+    const url = `https://webservice.bir.no/api/tomminger?eiendomId=${encodeURIComponent(locationId)}&datoFra=${from}&datoTil=${to}`;
+    const res = await fetch(url, {
+      headers: { Token: token },
+    });
+    if (!res.ok) {
+      throw new Error(`BIR pickups fetch failed: ${res.status}`);
+    }
+    const data = (await res.json()) as BirPickupEntry[];
 
-  const url = `https://webservice.bir.no/api/tomminger?eiendomId=${encodeURIComponent(locationId)}&datoFra=${from}&datoTil=${to}`;
-  const res = await fetch(url, {
-    headers: { Token: token },
+    return normalizePickups(
+      data.map((e) => ({
+        date: e.dato.slice(0, 10),
+        fraction: e.fraksjon,
+        fractionId: String(e.fraksjonId),
+      }))
+    );
   });
-  if (!res.ok) {
-    throw new Error(`BIR pickups fetch failed: ${res.status}`);
-  }
-  const data = (await res.json()) as BirPickupEntry[];
-
-  const pickups = normalizePickups(
-    data.map((e) => ({
-      date: e.dato.slice(0, 10),
-      fraction: e.fraksjon,
-      fractionId: String(e.fraksjonId),
-    }))
-  );
-
-  setCache(cacheKey, pickups);
-  return pickups;
 }
 
 export const birProvider: WasteProvider = {

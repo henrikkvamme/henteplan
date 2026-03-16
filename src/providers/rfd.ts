@@ -1,5 +1,5 @@
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 const RFD_SERVICE = "https://www.rfd.no/_/service/com.enonic.app.rfd";
@@ -58,49 +58,44 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
   }));
 }
 
-async function getPickups(locationId: string) {
-  const cacheKey = `rfd:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
+function getPickups(locationId: string) {
+  return withFallback(`rfd:${locationId}`, async () => {
+    const [regionId, streetCode, street, houseNumber, letter] =
+      locationId.split("|");
+    const params = new URLSearchParams({
+      region_id: regionId ?? "",
+      street_code: streetCode ?? "",
+      street: street ?? "",
+      house_number: houseNumber ?? "",
+      address_letter: letter ?? "",
+      pickupLimit: "500",
+    });
+    const url = `${RFD_SERVICE}/pickupDays?${params.toString()}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`RfD calendar fetch failed: ${res.status}`);
+    }
+    const data = (await res.json()) as { fetchDays: RfdFetchDay[] };
 
-  const [regionId, streetCode, street, houseNumber, letter] =
-    locationId.split("|");
-  const params = new URLSearchParams({
-    region_id: regionId ?? "",
-    street_code: streetCode ?? "",
-    street: street ?? "",
-    house_number: houseNumber ?? "",
-    address_letter: letter ?? "",
-    pickupLimit: "500",
+    const today = new Date().toISOString().slice(0, 10);
+    const pickups = normalizePickups(
+      data.fetchDays.flatMap((entry) => {
+        const fraction =
+          RFD_FRACTION_MAP[entry.fraksjonId] ?? `Fraksjon ${entry.fraksjonId}`;
+        return entry.tommedatoer
+          .map((d) => d.slice(0, 10))
+          .filter((d) => d >= today)
+          .map((d) => ({
+            date: d,
+            fraction,
+            fractionId: String(entry.fraksjonId),
+          }));
+      })
+    );
+
+    pickups.sort((a, b) => a.date.localeCompare(b.date));
+    return pickups;
   });
-  const url = `${RFD_SERVICE}/pickupDays?${params.toString()}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`RfD calendar fetch failed: ${res.status}`);
-  }
-  const data = (await res.json()) as { fetchDays: RfdFetchDay[] };
-
-  const today = new Date().toISOString().slice(0, 10);
-  const pickups = normalizePickups(
-    data.fetchDays.flatMap((entry) => {
-      const fraction =
-        RFD_FRACTION_MAP[entry.fraksjonId] ?? `Fraksjon ${entry.fraksjonId}`;
-      return entry.tommedatoer
-        .map((d) => d.slice(0, 10))
-        .filter((d) => d >= today)
-        .map((d) => ({
-          date: d,
-          fraction,
-          fractionId: String(entry.fraksjonId),
-        }));
-    })
-  );
-
-  pickups.sort((a, b) => a.date.localeCompare(b.date));
-  setCache(cacheKey, pickups);
-  return pickups;
 }
 
 export const rfdProvider: WasteProvider = {

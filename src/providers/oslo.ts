@@ -1,5 +1,5 @@
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface OsloService {
@@ -87,55 +87,50 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
   }));
 }
 
-async function getPickups(locationId: string) {
-  const cacheKey = `oslo:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
+function getPickups(locationId: string) {
+  return withFallback(`oslo:${locationId}`, async () => {
+    const parts = locationId.split("|");
+    const street = parts[0] ?? "";
+    const streetId = parts[1] ?? "";
+    const number = parts[2] ?? "";
+    const letter = parts[3] ?? "";
+    const params = new URLSearchParams({
+      street,
+      number,
+      letter,
+      street_id: streetId,
+    });
+    const res = await fetch(
+      `https://www.oslo.kommune.no/actions/snap-lib-waste-complaint/search-by-address?${params.toString()}`
+    );
+    if (!res.ok) {
+      throw new Error(`Oslo calendar fetch failed: ${res.status}`);
+    }
+    const body = (await res.json()) as
+      | OsloService[]
+      | { result: OsloService[] };
+    const services = Array.isArray(body) ? body : body.result;
 
-  const parts = locationId.split("|");
-  const street = parts[0] ?? "";
-  const streetId = parts[1] ?? "";
-  const number = parts[2] ?? "";
-  const letter = parts[3] ?? "";
-  const params = new URLSearchParams({
-    street,
-    number,
-    letter,
-    street_id: streetId,
+    const today = new Date().toISOString().slice(0, 10);
+    const pickups = normalizePickups(
+      services
+        .filter((svc) => svc.TommeDato && svc.Fraksjon)
+        .flatMap((svc) => {
+          const nextDateIso = parseOsloDate(svc.TommeDato);
+          const dates = generateOsloDates(nextDateIso, svc.Hyppighet);
+          return dates
+            .filter((d) => d >= today)
+            .map((d) => ({
+              date: d,
+              fraction: svc.Fraksjon.Tekst,
+              fractionId: String(svc.Fraksjon.Id),
+            }));
+        })
+    );
+
+    pickups.sort((a, b) => a.date.localeCompare(b.date));
+    return pickups;
   });
-  const res = await fetch(
-    `https://www.oslo.kommune.no/actions/snap-lib-waste-complaint/search-by-address?${params.toString()}`
-  );
-  if (!res.ok) {
-    throw new Error(`Oslo calendar fetch failed: ${res.status}`);
-  }
-  const body = (await res.json()) as
-    | OsloService[]
-    | { result: OsloService[] };
-  const services = Array.isArray(body) ? body : body.result;
-
-  const today = new Date().toISOString().slice(0, 10);
-  const pickups = normalizePickups(
-    services
-      .filter((svc) => svc.TommeDato && svc.Fraksjon)
-      .flatMap((svc) => {
-        const nextDateIso = parseOsloDate(svc.TommeDato);
-        const dates = generateOsloDates(nextDateIso, svc.Hyppighet);
-        return dates
-          .filter((d) => d >= today)
-          .map((d) => ({
-            date: d,
-            fraction: svc.Fraksjon.Tekst,
-            fractionId: String(svc.Fraksjon.Id),
-          }));
-      })
-  );
-
-  pickups.sort((a, b) => a.date.localeCompare(b.date));
-  setCache(cacheKey, pickups);
-  return pickups;
 }
 
 export const osloProvider: WasteProvider = {

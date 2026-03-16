@@ -1,6 +1,6 @@
 import { parse as parseHtml } from "node-html-parser";
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface RenovasjonenAddress {
@@ -111,36 +111,31 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
   return results;
 }
 
-async function getPickups(locationId: string) {
-  const cacheKey = `renovasjonen:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
+function getPickups(locationId: string) {
+  return withFallback(`renovasjonen:${locationId}`, async () => {
+    const [variant, uuid, gNr, bNr, sNr] = locationId.split("|");
 
-  const [variant, uuid, gNr, bNr, sNr] = locationId.split("|");
+    let calendarUrl: string;
+    if (variant === "sandnes") {
+      calendarUrl = `https://www.hentavfall.no/rogaland/sandnes/tommekalender/show?id=${encodeURIComponent(uuid ?? "")}&municipality=${encodeURIComponent("Sandnes kommune 2020")}&gnumber=${gNr}&bnumber=${bNr}&snumber=${sNr}`;
+    } else {
+      calendarUrl = `https://www.stavanger.kommune.no/renovasjon-og-miljo/tommekalender/finn-kalender/show?ids=${encodeURIComponent(uuid ?? "")}&municipality=Stavanger&gnumber=${gNr}&bnumber=${bNr}&snumber=${sNr}`;
+    }
 
-  let calendarUrl: string;
-  if (variant === "sandnes") {
-    calendarUrl = `https://www.hentavfall.no/rogaland/sandnes/tommekalender/show?id=${encodeURIComponent(uuid ?? "")}&municipality=${encodeURIComponent("Sandnes kommune 2020")}&gnumber=${gNr}&bnumber=${bNr}&snumber=${sNr}`;
-  } else {
-    calendarUrl = `https://www.stavanger.kommune.no/renovasjon-og-miljo/tommekalender/finn-kalender/show?ids=${encodeURIComponent(uuid ?? "")}&municipality=Stavanger&gnumber=${gNr}&bnumber=${bNr}&snumber=${sNr}`;
-  }
+    const res = await fetch(calendarUrl);
+    if (!res.ok) {
+      throw new Error(`Renovasjonen calendar fetch failed: ${res.status}`);
+    }
+    const html = await res.text();
 
-  const res = await fetch(calendarUrl);
-  if (!res.ok) {
-    throw new Error(`Renovasjonen calendar fetch failed: ${res.status}`);
-  }
-  const html = await res.text();
+    const today = new Date().toISOString().slice(0, 10);
+    const pickups = normalizePickups(
+      parseRenovasjonenCalendarHtml(html).filter((p) => p.date >= today)
+    );
 
-  const today = new Date().toISOString().slice(0, 10);
-  const pickups = normalizePickups(
-    parseRenovasjonenCalendarHtml(html).filter((p) => p.date >= today)
-  );
-
-  pickups.sort((a, b) => a.date.localeCompare(b.date));
-  setCache(cacheKey, pickups);
-  return pickups;
+    pickups.sort((a, b) => a.date.localeCompare(b.date));
+    return pickups;
+  });
 }
 
 export const renovasjonenProvider: WasteProvider = {

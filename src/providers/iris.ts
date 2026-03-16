@@ -1,6 +1,6 @@
 import { parse as parseHtml } from "node-html-parser";
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface IrisEstate {
@@ -120,30 +120,25 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
   }));
 }
 
-async function getPickups(locationId: string) {
-  const cacheKey = `iris:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
+function getPickups(locationId: string) {
+  return withFallback(`iris:${locationId}`, async () => {
+    const [estateId, estateName, municipality] = locationId.split("|");
 
-  const [estateId, estateName, municipality] = locationId.split("|");
+    const calendarUrl = `${IRIS_CALENDAR}?lookup=${encodeURIComponent(estateId ?? "")}&address=${encodeURIComponent(estateName ?? "")}&municipality=${encodeURIComponent(municipality ?? "")}`;
+    const res = await fetch(calendarUrl);
+    if (!res.ok) {
+      throw new Error(`IRIS calendar fetch failed: ${res.status}`);
+    }
+    const html = await res.text();
 
-  const calendarUrl = `${IRIS_CALENDAR}?lookup=${encodeURIComponent(estateId ?? "")}&address=${encodeURIComponent(estateName ?? "")}&municipality=${encodeURIComponent(municipality ?? "")}`;
-  const res = await fetch(calendarUrl);
-  if (!res.ok) {
-    throw new Error(`IRIS calendar fetch failed: ${res.status}`);
-  }
-  const html = await res.text();
+    const today = new Date().toISOString().slice(0, 10);
+    const pickups = normalizePickups(
+      parseIrisCalendarHtml(html).filter((p) => p.date >= today)
+    );
 
-  const today = new Date().toISOString().slice(0, 10);
-  const pickups = normalizePickups(
-    parseIrisCalendarHtml(html).filter((p) => p.date >= today)
-  );
-
-  pickups.sort((a, b) => a.date.localeCompare(b.date));
-  setCache(cacheKey, pickups);
-  return pickups;
+    pickups.sort((a, b) => a.date.localeCompare(b.date));
+    return pickups;
+  });
 }
 
 export const irisProvider: WasteProvider = {

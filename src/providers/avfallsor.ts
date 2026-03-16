@@ -1,5 +1,5 @@
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface AvfallSorAddress {
@@ -42,35 +42,30 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
   });
 }
 
-async function getPickups(locationId: string) {
-  const cacheKey = `avfallsor:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
+function getPickups(locationId: string) {
+  return withFallback(`avfallsor:${locationId}`, async () => {
+    const url = `https://avfallsor.no/wp-json/pickup-calendar/v1/collections/property-id/${locationId}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Avfall Sør calendar fetch failed: ${res.status}`);
+    }
+    const data = (await res.json()) as AvfallSorCalendar;
 
-  const url = `https://avfallsor.no/wp-json/pickup-calendar/v1/collections/property-id/${locationId}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Avfall Sør calendar fetch failed: ${res.status}`);
-  }
-  const data = (await res.json()) as AvfallSorCalendar;
+    const today = new Date().toISOString().slice(0, 10);
+    const pickups = normalizePickups(
+      (data.collections ?? [])
+        .flatMap((c) => c.items)
+        .filter((item) => item.dato >= today)
+        .map((item) => ({
+          date: item.dato.slice(0, 10),
+          fraction: item.fraksjon,
+          fractionId: item.fraksjonId,
+        }))
+    );
 
-  const today = new Date().toISOString().slice(0, 10);
-  const pickups = normalizePickups(
-    (data.collections ?? [])
-      .flatMap((c) => c.items)
-      .filter((item) => item.dato >= today)
-      .map((item) => ({
-        date: item.dato.slice(0, 10),
-        fraction: item.fraksjon,
-        fractionId: item.fraksjonId,
-      }))
-  );
-
-  pickups.sort((a, b) => a.date.localeCompare(b.date));
-  setCache(cacheKey, pickups);
-  return pickups;
+    pickups.sort((a, b) => a.date.localeCompare(b.date));
+    return pickups;
+  });
 }
 
 export const avfallsorProvider: WasteProvider = {

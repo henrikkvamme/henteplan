@@ -1,5 +1,5 @@
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface HimAddress {
@@ -50,37 +50,32 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
 }
 
 // noinspection MagicNumber
-async function getPickups(locationId: string) {
-  const cacheKey = `him:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
+function getPickups(locationId: string) {
+  return withFallback(`him:${locationId}`, async () => {
+    const now = new Date();
+    const from = now.toISOString().slice(0, 10);
+    const to = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
 
-  const now = new Date();
-  const from = now.toISOString().slice(0, 10);
-  const to = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+    const url = `https://him.as/wp-json/him/tomminger?eiendomId=${encodeURIComponent(locationId)}&datoFra=${from}&datoTil=${to}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`HIM calendar fetch failed: ${res.status}`);
+    }
+    const data = (await res.json()) as HimPickupEntry[];
 
-  const url = `https://him.as/wp-json/him/tomminger?eiendomId=${encodeURIComponent(locationId)}&datoFra=${from}&datoTil=${to}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HIM calendar fetch failed: ${res.status}`);
-  }
-  const data = (await res.json()) as HimPickupEntry[];
+    const pickups = normalizePickups(
+      data.map((e) => ({
+        date: e.dato.slice(0, 10),
+        fraction: e.fraksjon,
+        fractionId: e.fraksjonId,
+      }))
+    );
 
-  const pickups = normalizePickups(
-    data.map((e) => ({
-      date: e.dato.slice(0, 10),
-      fraction: e.fraksjon,
-      fractionId: e.fraksjonId,
-    }))
-  );
-
-  pickups.sort((a, b) => a.date.localeCompare(b.date));
-  setCache(cacheKey, pickups);
-  return pickups;
+    pickups.sort((a, b) => a.date.localeCompare(b.date));
+    return pickups;
+  });
 }
 
 export const himProvider: WasteProvider = {

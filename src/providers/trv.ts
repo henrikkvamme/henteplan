@@ -1,5 +1,5 @@
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface TrvAddressResult {
@@ -37,33 +37,26 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
   }));
 }
 
-async function getPickups(locationId: string) {
-  const cacheKey = `trv:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
+function getPickups(locationId: string) {
+  return withFallback(`trv:${locationId}`, async () => {
+    const url = `https://trv.no/wp-json/wasteplan/v2/calendar/${locationId}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`TRV calendar fetch failed: ${res.status}`);
+    }
+    const json = (await res.json()) as { calendar: TrvCalendarEntry[] };
 
-  const url = `https://trv.no/wp-json/wasteplan/v2/calendar/${locationId}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`TRV calendar fetch failed: ${res.status}`);
-  }
-  const json = (await res.json()) as { calendar: TrvCalendarEntry[] };
-
-  const today = new Date().toISOString().slice(0, 10);
-  const pickups = normalizePickups(
-    json.calendar
-      .filter((e) => e.dato >= today)
-      .map((e) => ({
-        date: e.dato.slice(0, 10),
-        fraction: e.fraksjon,
-        fractionId: e.fraksjonId,
-      }))
-  );
-
-  setCache(cacheKey, pickups);
-  return pickups;
+    const today = new Date().toISOString().slice(0, 10);
+    return normalizePickups(
+      json.calendar
+        .filter((e) => e.dato >= today)
+        .map((e) => ({
+          date: e.dato.slice(0, 10),
+          fraction: e.fraksjon,
+          fractionId: e.fraksjonId,
+        }))
+    );
+  });
 }
 
 export const trvProvider: WasteProvider = {

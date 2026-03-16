@@ -1,5 +1,5 @@
 import { normalizePickups } from "../fractions/normalize";
-import { getCached, setCache } from "./cache";
+import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
 interface InnherredAddressResult {
@@ -39,44 +39,40 @@ async function searchAddress(query: string): Promise<AddressMatch[]> {
   }));
 }
 
-async function getPickups(locationId: string) {
-  const cacheKey = `innherred:${locationId}`;
-  const cached = getCached(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
-  const url = `https://innherredrenovasjon.no/wp-json/ir/v1/garbage-disposal-dates-by-address?address=${encodeURIComponent(locationId)}&days=365`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    // The API returns 404 when an address has no disposal dates registered
-    if (res.status === 404) {
-      return [];
+function getPickups(locationId: string) {
+  return withFallback(`innherred:${locationId}`, async () => {
+    const url = `https://innherredrenovasjon.no/wp-json/ir/v1/garbage-disposal-dates-by-address?address=${encodeURIComponent(locationId)}&days=365`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      // The API returns 404 when an address has no disposal dates registered
+      if (res.status === 404) {
+        return [];
+      }
+      throw new Error(`Innherred calendar fetch failed: ${res.status}`);
     }
-    throw new Error(`Innherred calendar fetch failed: ${res.status}`);
-  }
 
-  const json = (await res.json()) as Record<string, InnherredFraction>;
-  const today = new Date().toISOString().slice(0, 10);
-  const raw: Array<{ date: string; fraction: string; fractionId: string }> = [];
+    const json = (await res.json()) as Record<string, InnherredFraction>;
+    const today = new Date().toISOString().slice(0, 10);
+    const raw: Array<{ date: string; fraction: string; fractionId: string }> =
+      [];
 
-  for (const frac of Object.values(json)) {
-    for (const dt of frac.dates) {
-      const date = dt.slice(0, 10);
-      if (date >= today) {
-        raw.push({
-          date,
-          fraction: frac.fraction_name,
-          fractionId: frac.fraction_id,
-        });
+    for (const frac of Object.values(json)) {
+      for (const dt of frac.dates) {
+        const date = dt.slice(0, 10);
+        if (date >= today) {
+          raw.push({
+            date,
+            fraction: frac.fraction_name,
+            fractionId: frac.fraction_id,
+          });
+        }
       }
     }
-  }
 
-  const pickups = normalizePickups(raw);
-  pickups.sort((a, b) => a.date.localeCompare(b.date));
-  setCache(cacheKey, pickups);
-  return pickups;
+    const pickups = normalizePickups(raw);
+    pickups.sort((a, b) => a.date.localeCompare(b.date));
+    return pickups;
+  });
 }
 
 export const innherredProvider: WasteProvider = {
