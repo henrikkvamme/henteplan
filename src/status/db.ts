@@ -78,8 +78,8 @@ function deriveStatus(total: number, passed: number): string {
   return "degraded";
 }
 
-export function reportChecks(checks: CheckReport[]): void {
-  const now = new Date().toISOString();
+export function reportChecks(checks: CheckReport[], checkedAt?: string): void {
+  const now = checkedAt ?? new Date().toISOString();
   const insert = db.transaction(() => {
     for (const check of checks) {
       const status = deriveStatus(check.total, check.passed);

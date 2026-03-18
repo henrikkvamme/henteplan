@@ -26,8 +26,9 @@ app.post("/api/v1/status/report", async (c) => {
       passed: number;
       errors?: string[];
     }[];
+    checkedAt?: string;
   }>();
-  reportChecks(body.checks);
+  reportChecks(body.checks, body.checkedAt);
   return c.json({ ok: true });
 });
 
