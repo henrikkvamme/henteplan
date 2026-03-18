@@ -1,0 +1,2 @@
+[test.env]
+CACHE_DB_PATH = ":memory:"

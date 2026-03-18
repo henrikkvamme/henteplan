@@ -1,59 +1,58 @@
+import { Database } from "bun:sqlite";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import type { WastePickup } from "./types";
 
-const CACHE = new Map<string, { data: WastePickup[]; expiresAt: number }>();
 // noinspection MagicNumber
 const TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
-function getCached(key: string): WastePickup[] | null {
-  const entry = CACHE.get(key);
-  if (entry && entry.expiresAt > Date.now()) {
-    return entry.data;
-  }
-  return null;
+const DB_PATH = process.env.CACHE_DB_PATH ?? "data/cache.db";
+if (DB_PATH !== ":memory:") {
+  mkdirSync(dirname(DB_PATH), { recursive: true });
 }
+const db = new Database(DB_PATH);
+db.exec("PRAGMA journal_mode=WAL");
+db.exec(`
+  CREATE TABLE IF NOT EXISTS cache (
+    key TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    expires_at INTEGER NOT NULL
+  )
+`);
 
-function setCache(key: string, data: WastePickup[]): void {
-  CACHE.set(key, { data, expiresAt: Date.now() + TTL_MS });
+const stmtGet = db.prepare<{ data: string; expires_at: number }, [string]>(
+  "SELECT data, expires_at FROM cache WHERE key = ?1"
+);
+const stmtUpsert = db.prepare(
+  "INSERT OR REPLACE INTO cache (key, data, expires_at) VALUES (?1, ?2, ?3)"
+);
+
+function getRow(key: string) {
+  return stmtGet.get(key);
 }
 
 export async function withFallback(
   key: string,
   fetcher: () => Promise<WastePickup[]>
 ): Promise<WastePickup[]> {
-  const fresh = getCached(key);
-  if (fresh) {
-    return fresh;
+  const row = getRow(key);
+  if (row && row.expires_at > Date.now()) {
+    return JSON.parse(row.data) as WastePickup[];
   }
 
   try {
     const data = await fetcher();
-    setCache(key, data);
+    stmtUpsert.run(key, JSON.stringify(data), Date.now() + TTL_MS);
     return data;
   } catch (err) {
-    const stale = CACHE.get(key);
-    if (stale) {
+    if (row) {
       console.warn(
-        `[cache] Serving stale data for ${key} (expired ${new Date(stale.expiresAt).toISOString()})`
+        `[cache] Serving stale data for ${key} (expired ${new Date(row.expires_at).toISOString()})`
       );
-      return stale.data;
+      return JSON.parse(row.data) as WastePickup[];
     }
     throw err;
   }
-}
-
-// Generic cache for non-pickup data (e.g. Norkart customer list)
-const GENERIC_CACHE = new Map<string, { data: unknown; expiresAt: number }>();
-
-function getCachedGeneric<T>(key: string): T | null {
-  const entry = GENERIC_CACHE.get(key);
-  if (entry && entry.expiresAt > Date.now()) {
-    return entry.data as T;
-  }
-  return null;
-}
-
-function setCacheGeneric(key: string, data: unknown, ttlMs: number): void {
-  GENERIC_CACHE.set(key, { data, expiresAt: Date.now() + ttlMs });
 }
 
 export async function withGenericFallback<T>(
@@ -61,26 +60,25 @@ export async function withGenericFallback<T>(
   ttlMs: number,
   fetcher: () => Promise<T>
 ): Promise<T> {
-  const fresh = getCachedGeneric<T>(key);
-  if (fresh) {
-    return fresh;
+  const row = getRow(key);
+  if (row && row.expires_at > Date.now()) {
+    return JSON.parse(row.data) as T;
   }
 
   try {
     const data = await fetcher();
-    setCacheGeneric(key, data, ttlMs);
+    stmtUpsert.run(key, JSON.stringify(data), Date.now() + ttlMs);
     return data;
   } catch (err) {
-    const stale = GENERIC_CACHE.get(key);
-    if (stale) {
+    if (row) {
       console.warn(
-        `[cache] Serving stale data for ${key} (expired ${new Date(stale.expiresAt).toISOString()})`
+        `[cache] Serving stale data for ${key} (expired ${new Date(row.expires_at).toISOString()})`
       );
-      return stale.data as T;
+      return JSON.parse(row.data) as T;
     }
     throw err;
   }
 }
 
 // Exported for testing only
-export { CACHE, GENERIC_CACHE, getCached, setCache, TTL_MS };
+export { db, TTL_MS };

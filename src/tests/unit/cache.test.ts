@@ -1,15 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import {
-  CACHE,
-  GENERIC_CACHE,
-  withFallback,
-  withGenericFallback,
-} from "@/providers/cache";
+import { db, withFallback, withGenericFallback } from "@/providers/cache";
 import type { WastePickup } from "@/providers/types";
 
 afterEach(() => {
-  CACHE.clear();
-  GENERIC_CACHE.clear();
+  db.exec("DELETE FROM cache");
 });
 
 const PICKUP: WastePickup = {
@@ -39,9 +33,9 @@ describe("withFallback", () => {
     await withFallback("test:stale", () => Promise.resolve([PICKUP]));
 
     // Expire the entry
-    const entry = CACHE.get("test:stale");
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    entry!.expiresAt = Date.now() - 1;
+    db.exec("UPDATE cache SET expires_at = ?1 WHERE key = 'test:stale'", [
+      Date.now() - 1,
+    ]);
 
     // Fetcher now fails
     const result = await withFallback("test:stale", () => {
@@ -83,9 +77,9 @@ describe("withGenericFallback", () => {
 
     await withGenericFallback("gen:stale", ttl, () => Promise.resolve(data));
 
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const entry = GENERIC_CACHE.get("gen:stale")!;
-    entry.expiresAt = Date.now() - 1;
+    db.exec("UPDATE cache SET expires_at = ?1 WHERE key = 'gen:stale'", [
+      Date.now() - 1,
+    ]);
 
     const result = await withGenericFallback<string[]>("gen:stale", ttl, () => {
       throw new Error("service down");
