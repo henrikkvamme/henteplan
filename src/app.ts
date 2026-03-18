@@ -77,12 +77,40 @@ export function createApp() {
     apiReference({
       spec: { url: "/openapi.json" },
       theme: "kepler",
+      pageTitle: "Henteplan API",
+      favicon: "/assets/favicon.svg",
       metaData: {
         title: "Henteplan API Documentation",
         description:
           "Interactive API docs for Norwegian waste collection schedules.",
       },
       defaultHttpClient: { targetKey: "js", clientKey: "fetch" },
+      hiddenClients: ["powershell", "objc", "ocaml", "r", "clojure", "c"],
+      customCss: `
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600&display=swap');
+        .light-mode {
+          --scalar-color-1: #2C2C2C;
+          --scalar-color-2: rgba(44, 44, 44, 0.7);
+          --scalar-color-3: rgba(44, 44, 44, 0.44);
+          --scalar-color-accent: #2A7C6F;
+          --scalar-background-1: #FAF7F2;
+          --scalar-background-2: #F3EEE7;
+          --scalar-background-3: #E8E2D8;
+          --scalar-background-accent: #2A7C6F14;
+          --scalar-border-color: #E8E2D8;
+        }
+        .dark-mode {
+          --scalar-color-accent: #4DB8A8;
+          --scalar-background-accent: #4DB8A81A;
+        }
+        .light-mode .sidebar {
+          --scalar-sidebar-background-1: #F3EEE7;
+          --scalar-sidebar-border-color: #E8E2D8;
+          --scalar-sidebar-search-background: #FAF7F2;
+          --scalar-sidebar-search-border-color: #E8E2D8;
+        }
+        .scalar-app .section-header-intro-key { font-family: 'Fraunces', Georgia, serif; }
+      `,
     })
   );
 
