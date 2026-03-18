@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="nb">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status — Henteplan</title>
+    <meta name="description" content="Driftsstatus for alle renovasjonstjenester i Henteplan.">
+    <link rel="canonical" href="https://henteplan.no/status">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#2A7C6F">
+    <link rel="icon" href="/assets/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+    *, *::before, *::after { box-sizing: border-box; padding: 0; margin: 0; }
+
+    :root {
+      color-scheme: light;
+      --bg: #FAF7F2;
+      --bg-card: #FFFFFF;
+      --text: #2C2C2C;
+      --text-muted: #6B6560;
+      --border: #E8E2D8;
+      --primary: #2A7C6F;
+      --primary-hover: #1A5C52;
+      --green: #22A06B;
+      --yellow: #CF9F02;
+      --red: #DE350B;
+      --radius: 16px;
+      --shadow: 0 2px 8px rgba(44, 44, 44, 0.06), 0 1px 3px rgba(44, 44, 44, 0.04);
+      --shadow-lg: 0 8px 24px rgba(44, 44, 44, 0.1), 0 2px 8px rgba(44, 44, 44, 0.06);
+      --font-heading: 'Fraunces', Georgia, serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+      font-family: var(--font-body);
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main {
+      width: 100%;
+      max-width: 800px;
+      padding: 0 24px 80px;
+    }
+
+    .header {
+      padding-top: 48px;
+      padding-bottom: 32px;
+      animation: fadeInUp 0.6s ease-out both;
+    }
+
+    .header-nav {
+      margin-bottom: 24px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .back-link:hover {
+      color: var(--primary-hover);
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    /* Overall status banner */
+    .status-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      animation: fadeInUp 0.6s ease-out 0.1s both;
+    }
+
+    .status-banner-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-banner-dot.up { background: var(--green); box-shadow: 0 0 0 4px rgba(34, 160, 107, 0.15); }
+    .status-banner-dot.degraded { background: var(--yellow); box-shadow: 0 0 0 4px rgba(207, 159, 2, 0.15); }
+    .status-banner-dot.down { background: var(--red); box-shadow: 0 0 0 4px rgba(222, 53, 11, 0.15); }
+    .status-banner-dot.unknown { background: var(--border); }
+
+    .status-banner-text {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .status-banner-time {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Provider grid */
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 12px;
+    }
+
+    .provider-card {
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      animation: cardEntry 0.4s ease-out forwards;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .provider-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .provider-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .provider-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .provider-dot.up { background: var(--green); }
+    .provider-dot.degraded { background: var(--yellow); }
+    .provider-dot.down { background: var(--red); }
+    .provider-dot.unknown { background: var(--border); }
+
+    .provider-name {
+      font-size: 15px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .provider-uptime {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* Timeline bar */
+    .timeline {
+      display: flex;
+      gap: 2px;
+      height: 28px;
+      align-items: flex-end;
+    }
+
+    .timeline-bar {
+      flex: 1;
+      min-width: 3px;
+      border-radius: 2px;
+      transition: opacity 0.15s ease;
+      cursor: default;
+      position: relative;
+    }
+
+    .timeline-bar.up { background: var(--green); }
+    .timeline-bar.degraded { background: var(--yellow); }
+    .timeline-bar.down { background: var(--red); }
+    .timeline-bar.empty { background: var(--border); opacity: 0.4; }
+
+    .timeline-bar:hover { opacity: 0.7; }
+
+    .timeline-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .provider-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 32px 24px;
+      margin-top: auto;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    footer a:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes cardEntry {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .provider-card { opacity: 1 !important; animation: none !important; }
+    }
+
+    @media (max-width: 480px) {
+      main { padding: 0 16px 80px; }
+      .header { padding-top: 32px; }
+      h1 { font-size: 26px; }
+      .provider-grid { grid-template-columns: 1fr; }
+    }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="header">
+        <nav class="header-nav">
+          <a href="/" class="back-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 12H5"/>
+              <path d="m12 19-7-7 7-7"/>
+            </svg>
+            Tilbake til Henteplan
+          </a>
+        </nav>
+        <h1>Driftsstatus</h1>
+        <p class="subtitle">Daglige tester mot alle renovasjonstjenester</p>
+      </div>
+
+      <div id="banner" class="status-banner" style="display:none">
+        <span class="status-banner-dot" id="banner-dot"></span>
+        <span class="status-banner-text" id="banner-text"></span>
+        <span class="status-banner-time" id="banner-time"></span>
+      </div>
+
+      <div id="content">
+        <div class="loading">Laster status...</div>
+      </div>
+    </main>
+
+    <footer>
+      <nav>
+        <a href="/">Henteplan</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/docs">API-dokumentasjon</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://github.com/henrikkvamme/henteplan" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </footer>
+
+    <script>
+    "use strict";
+
+    async function loadStatus() {
+      try {
+        const res = await fetch("/api/v1/status");
+        const data = await res.json();
+        render(data.providers);
+      } catch {
+        document.getElementById("content").innerHTML =
+          '<div class="loading">Kunne ikke laste status. Pr\u00f8v igjen senere.</div>';
+      }
+    }
+
+    function render(providers) {
+      renderBanner(providers);
+      renderGrid(providers);
+    }
+
+    function renderBanner(providers) {
+      const banner = document.getElementById("banner");
+      const dot = document.getElementById("banner-dot");
+      const text = document.getElementById("banner-text");
+      const time = document.getElementById("banner-time");
+
+      const hasData = providers.some(p => p.status !== "unknown");
+      if (!hasData) {
+        banner.style.display = "flex";
+        dot.className = "status-banner-dot unknown";
+        text.textContent = "Ingen testdata enn\u00e5";
+        time.textContent = "";
+        return;
+      }
+
+      const downCount = providers.filter(p => p.status === "down").length;
+      const degradedCount = providers.filter(p => p.status === "degraded").length;
+
+      let overall, label;
+      if (downCount > 0) {
+        overall = "down";
+        label = downCount === 1
+          ? "1 tjeneste er nede"
+          : `${downCount} tjenester er nede`;
+      } else if (degradedCount > 0) {
+        overall = "degraded";
+        label = degradedCount === 1
+          ? "1 tjeneste er delvis nede"
+          : `${degradedCount} tjenester er delvis nede`;
+      } else {
+        overall = "up";
+        label = "Alle tjenester er oppe";
+      }
+
+      dot.className = `status-banner-dot ${overall}`;
+      text.textContent = label;
+
+      const lastChecked = providers
+        .filter(p => p.lastChecked)
+        .map(p => new Date(p.lastChecked))
+        .sort((a, b) => b - a)[0];
+
+      time.textContent = lastChecked ? `Sist sjekket ${timeAgo(lastChecked)}` : "";
+      banner.style.display = "flex";
+    }
+
+    function renderGrid(providers) {
+      const sorted = [...providers].sort((a, b) => {
+        const order = { down: 0, degraded: 1, unknown: 2, up: 3 };
+        return (order[a.status] ?? 2) - (order[b.status] ?? 2);
+      });
+
+      const container = document.getElementById("content");
+      container.innerHTML = '<div class="provider-grid" id="grid"></div>';
+      const grid = document.getElementById("grid");
+
+      sorted.forEach((p, i) => {
+        const card = document.createElement("div");
+        card.className = "provider-card";
+        card.style.animationDelay = `${i * 60}ms`;
+
+        const uptimeText = p.uptime30d !== null ? `${p.uptime30d}%` : "\u2014";
+        const timeline = renderTimeline(p.history);
+        const lastLabel = p.lastChecked ? timeAgo(new Date(p.lastChecked)) : "aldri testet";
+
+        card.innerHTML = `
+          <div class="provider-card-header">
+            <span class="provider-dot ${p.status}"></span>
+            <span class="provider-name">${esc(p.name)}</span>
+            <span class="provider-uptime">${uptimeText}</span>
+          </div>
+          ${timeline}
+          <div class="provider-meta">
+            <span>Sist sjekket: ${lastLabel}</span>
+            <span>30 dager oppetid</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderTimeline(history) {
+      if (!history || history.length === 0) {
+        const bars = Array.from({ length: 30 }, () =>
+          '<div class="timeline-bar empty" style="height:28px" title="Ingen data"></div>'
+        ).join("");
+        return `<div class="timeline">${bars}</div>
+                <div class="timeline-labels"><span>30 d. siden</span><span>I dag</span></div>`;
+      }
+
+      const reversed = [...history].reverse();
+      const maxBars = 90;
+      const display = reversed.slice(-maxBars);
+
+      const bars = display.map(h => {
+        const date = new Date(h.checkedAt).toLocaleDateString("nb-NO", {
+          day: "numeric", month: "short",
+        });
+        const pct = h.total > 0 ? Math.round(h.passed / h.total * 100) : 0;
+        const height = h.status === "up" ? 28 : h.status === "degraded" ? 18 : 8;
+        const title = `${date}: ${pct}% (${h.passed}/${h.total})`;
+        return `<div class="timeline-bar ${h.status}" style="height:${height}px" title="${title}"></div>`;
+      }).join("");
+
+      const oldest = new Date(display[0]?.checkedAt);
+      const daysAgo = Math.round((Date.now() - oldest) / 86_400_000);
+      const leftLabel = daysAgo > 1 ? `${daysAgo} d. siden` : "I g\u00e5r";
+
+      return `<div class="timeline">${bars}</div>
+              <div class="timeline-labels"><span>${leftLabel}</span><span>I dag</span></div>`;
+    }
+
+    function timeAgo(date) {
+      const mins = Math.round((Date.now() - date.getTime()) / 60_000);
+      if (mins < 1) return "akkurat n\u00e5";
+      if (mins < 60) return `${mins} min siden`;
+      const hours = Math.round(mins / 60);
+      if (hours < 24) return `${hours} t siden`;
+      const days = Math.round(hours / 24);
+      return `${days} d siden`;
+    }
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    loadStatus();
+    </script>
+  </body>
+</html>

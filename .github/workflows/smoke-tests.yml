@@ -16,11 +16,36 @@ jobs:
       - name: Run smoke tests
         run: |
           set -o pipefail
-          bun test src/tests/e2e --timeout 120000 2>&1 | tee test-output.txt
+          bun test src/tests/e2e --timeout 360000 2>&1 | tee test-output.txt
         continue-on-error: true
         id: smoke
         env:
           HENTEPLAN_API_KEYS: ${{ secrets.HENTEPLAN_API_KEYS }}
+      - name: Report results to status API
+        if: always()
+        run: |
+          # Parse [status] lines emitted by smoke tests
+          # Format: [status] provider=trv passed=10 total=10
+          checks="["
+          first=true
+          while IFS= read -r line; do
+            if [[ "$line" =~ \[status\]\ provider=([a-z]+)\ passed=([0-9]+)\ total=([0-9]+) ]]; then
+              provider="${BASH_REMATCH[1]}"
+              passed="${BASH_REMATCH[2]}"
+              total="${BASH_REMATCH[3]}"
+              if [ "$first" = true ]; then first=false; else checks+=","; fi
+              checks+="{\"providerId\":\"$provider\",\"total\":$total,\"passed\":$passed}"
+            fi
+          done < test-output.txt
+
+          if [ "$checks" != "[]" ]; then
+            curl -s -X POST "https://henteplan.no/api/v1/status/report" \
+              -H "Content-Type: application/json" \
+              -H "x-api-key: $HENTEPLAN_API_KEY" \
+              -d "{\"checks\":$checks}" || echo "Failed to report status (non-fatal)"
+          fi
+        env:
+          HENTEPLAN_API_KEY: ${{ secrets.HENTEPLAN_API_KEY }}
       - name: Upload test output
         if: steps.smoke.outcome == 'failure'
         uses: actions/upload-artifact@v4

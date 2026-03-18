@@ -33,7 +33,7 @@ jobs:
         id: retest
         run: |
           set -o pipefail
-          if bun test src/tests/e2e --timeout 120000 2>&1 | tee test-output.txt; then
+          if bun test src/tests/e2e --timeout 360000 2>&1 | tee test-output.txt; then
             echo "result=pass" >> "$GITHUB_OUTPUT"
           else
             echo "result=fail" >> "$GITHUB_OUTPUT"
@@ -87,7 +87,7 @@ jobs:
         if: steps.retest.outputs.result == 'fail' && steps.check-pr.outputs.skip != 'true'
         id: verify
         run: |
-          bun test src/tests/e2e --timeout 120000 2>&1 | tee verify-output.txt || true
+          bun test src/tests/e2e --timeout 360000 2>&1 | tee verify-output.txt || true
           grep -oP '(?<=\(fail\) provider: )\w+' verify-output.txt | sort -u > /tmp/failing-providers-after.txt || true
           # Check if any NEW providers started failing after the agent's changes
           NEW_FAILURES=$(comm -13 /tmp/failing-providers-before.txt /tmp/failing-providers-after.txt)

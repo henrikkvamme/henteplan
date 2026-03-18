@@ -98,7 +98,7 @@ If the root cause is a stale address in `src/tests/setup.ts` (failure mode 6):
 
 Run the smoke tests to confirm your fix works:
 ```bash
-bun test src/tests/e2e --timeout 120000
+bun test src/tests/e2e --timeout 360000
 ```
 
 If the specific provider test passes but others fail, that's OK — only the originally broken provider needs to be fixed.

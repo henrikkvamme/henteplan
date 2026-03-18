@@ -12,6 +12,7 @@ import { providersRoute } from "./routes/providers";
 import { scheduleRoute } from "./routes/schedule";
 import { searchRoute } from "./routes/search";
 import { seoRoutes } from "./routes/seo";
+import { statusRoute } from "./routes/status";
 
 export function createApp() {
   const app = new OpenAPIHono();
@@ -38,6 +39,7 @@ export function createApp() {
   app.route("/", scheduleRoute);
   app.route("/", icalRoute);
   app.route("/", detectRoute);
+  app.route("/", statusRoute);
 
   // Internal routes (server-side Mapbox proxy for web interface)
   app.route("/", geocodeRoute);
@@ -82,6 +84,13 @@ export function createApp() {
   const htmlPath = new URL("./web/index.html", import.meta.url).pathname;
   app.get("/", async (c) => {
     const file = Bun.file(htmlPath);
+    return c.html(await file.text());
+  });
+
+  // Status page
+  const statusHtmlPath = new URL("./web/status.html", import.meta.url).pathname;
+  app.get("/status", async (c) => {
+    const file = Bun.file(statusHtmlPath);
     return c.html(await file.text());
   });
 
