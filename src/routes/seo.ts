@@ -15,6 +15,8 @@ Allow: /
 Disallow: /api/
 Allow: /docs
 Allow: /api/v1/providers
+Allow: /api/v1/status
+Allow: /api/v1/detect
 
 # AI crawlers – explicitly allowed
 User-agent: GPTBot
@@ -32,10 +34,19 @@ Allow: /
 User-agent: Claude-Web
 Allow: /
 
+User-agent: Claude-SearchBot
+Allow: /
+
 User-agent: Google-Extended
 Allow: /
 
+User-agent: GoogleAgent-Mariner
+Allow: /
+
 User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
 Allow: /
 
 User-agent: Applebot-Extended
@@ -77,6 +88,30 @@ app.get("/sitemap.xml", (c) => {
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>${SITE_URL}/status</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/llms.txt</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/llms-full.txt</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/openapi.json</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
 </urlset>`;
   return c.text(xml, 200, {
     "Content-Type": "application/xml; charset=utf-8",
@@ -112,6 +147,23 @@ Henteplan provides a free, open API for looking up waste collection schedules ac
 - GET /api/v1/search?q={address}&provider={id} — Search for addresses within a provider
 - GET /api/v1/schedule?provider={id}&locationId={id} — Get waste collection schedule
 - GET /api/v1/schedule.ics?provider={id}&locationId={id} — Download iCal calendar
+- GET /api/v1/status — Provider health status and uptime data
+
+## Rate Limits
+
+All endpoints are rate-limited per IP. Requests include \`X-RateLimit-Limit\` and \`X-RateLimit-Remaining\` headers.
+
+- /api/v1/search: 30 req/min
+- /api/v1/schedule, /api/v1/schedule.ics: 60 req/min
+- /api/v1/providers, /api/v1/detect: 120 req/min
+
+## Error Handling
+
+Errors return JSON with \`{ "error": "<message>" }\` and standard HTTP status codes:
+- 400 — Bad request (missing or invalid parameters)
+- 404 — Not found
+- 429 — Rate limit exceeded (retry after Retry-After header)
+- 500 — Internal server error
 
 ## Supported Providers
 
@@ -121,6 +173,7 @@ ${providerList}
 });
 
 app.get("/llms-full.txt", (c) => {
+  const fence = "```";
   const providers = getAllProviders();
   const providerDetails = providers
     .map((p) => {
@@ -225,12 +278,49 @@ The API normalizes waste fractions into standard categories:
 - \`christmas_tree\` — Juletre (Christmas trees)
 - \`other\` — Annet (other/miscellaneous)
 
+### GET /api/v1/status
+
+Get health status and uptime data for all providers.
+
+**Response:** Array of provider status objects with status ("up", "degraded", "down", "unknown"), uptime30d percentage, lastChecked timestamp, and history array.
+
+## Rate Limits
+
+All endpoints are rate-limited per IP. Responses include \`X-RateLimit-Limit\` and \`X-RateLimit-Remaining\` headers.
+
+- /api/v1/search: 30 req/min
+- /api/v1/schedule, /api/v1/schedule.ics: 60 req/min
+- /api/v1/providers, /api/v1/detect: 120 req/min
+
+## Error Handling
+
+Errors return JSON: \`{ "error": "<message>" }\`
+
+Standard HTTP status codes:
+- 400 — Bad request (missing or invalid parameters)
+- 404 — Not found
+- 429 — Rate limit exceeded (retry after \`Retry-After\` header)
+- 500 — Internal server error
+
 ## Typical Usage Flow
 
 1. Call \`/api/v1/detect\` with a postal code to find the provider
 2. Call \`/api/v1/search\` with the address and provider to get locationId
 3. Call \`/api/v1/schedule\` with provider and locationId to get the schedule
 4. Optionally use \`/api/v1/schedule.ics\` for calendar integration
+
+## Quick Start
+
+${fence}bash
+# 1. Detect provider for a postal code
+curl "${SITE_URL}/api/v1/detect?postalCode=7030"
+
+# 2. Search for an address
+curl "${SITE_URL}/api/v1/search?q=Lade+alle+1&provider=trv"
+
+# 3. Get the schedule
+curl "${SITE_URL}/api/v1/schedule?provider=trv&locationId=LOCATION_ID"
+${fence}
 `;
   return c.text(body, 200, { "Content-Type": "text/plain; charset=utf-8" });
 });
@@ -270,6 +360,11 @@ app.get("/.well-known/llm-index.json", (c) => {
         path: "/api/v1/schedule.ics",
         method: "GET",
         description: "Download schedule as iCal calendar",
+      },
+      {
+        path: "/api/v1/status",
+        method: "GET",
+        description: "Provider health status and uptime data",
       },
     ],
   });

@@ -55,6 +55,19 @@ export function createApp() {
       version: "0.1.0",
       description:
         "Open API for Norwegian waste collection schedules. Supports 13 providers covering 200+ municipalities.",
+      contact: {
+        name: "Henteplan",
+        url: "https://henteplan.no",
+      },
+      license: {
+        name: "MIT",
+        url: "https://github.com/henrikkvamme/henteplan/blob/main/LICENSE",
+      },
+    },
+    servers: [{ url: "https://henteplan.no", description: "Production" }],
+    externalDocs: {
+      description: "Full documentation (LLM-optimized)",
+      url: "https://henteplan.no/llms-full.txt",
     },
   });
 
@@ -63,6 +76,13 @@ export function createApp() {
     "/docs",
     apiReference({
       spec: { url: "/openapi.json" },
+      theme: "kepler",
+      metaData: {
+        title: "Henteplan API Documentation",
+        description:
+          "Interactive API docs for Norwegian waste collection schedules.",
+      },
+      defaultHttpClient: { targetKey: "js", clientKey: "fetch" },
     })
   );
 
