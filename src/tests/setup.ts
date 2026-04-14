@@ -195,7 +195,7 @@ export const PROVIDER_FIXTURES: Record<string, string[]> = {
   innherred: [
     "Kirkegata 3",
     "Sjøgata 1",
-    "Håkon den godes gate 1",
+    "Møllegata 1",
     "Jernbanegata 1",
     "Stiklestad Alle 1",
     "Nordåkeren",
