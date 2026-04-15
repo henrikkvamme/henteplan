@@ -148,7 +148,7 @@ export const PROVIDER_FIXTURES: Record<string, string[]> = {
     "Storgata 1",
     "Nygaardsgata 1",
     "Glemmengata 1",
-    "Holmegata 1",
+    "Ridehusgata 1",
     "Cicignongata 1",
     "Brochs gate 1",
     "Lykkeberg 1",
