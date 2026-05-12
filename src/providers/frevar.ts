@@ -23,6 +23,38 @@ interface ArcGisResponse<T> {
   features: ArcGisFeature<T>[];
 }
 
+interface ArcGisErrorBody {
+  error?: { code: number; message: string };
+}
+
+// ArcGIS at fredrikstad.kommune.no intermittently returns HTTP 200 with an
+// error body (no `features` field). Retry with backoff on these responses.
+// noinspection MagicNumber
+async function fetchArcGis<T>(
+  url: string,
+  context: string
+): Promise<ArcGisResponse<T>> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 300 * attempt));
+    }
+    const res = await fetch(url);
+    if (!res.ok) {
+      lastError = new Error(`FREVAR ${context} failed: ${res.status}`);
+      continue;
+    }
+    const data = (await res.json()) as ArcGisResponse<T> & ArcGisErrorBody;
+    if (Array.isArray(data.features)) {
+      return data;
+    }
+    lastError = new Error(
+      `FREVAR ${context} returned no features: ${data.error?.message ?? "unknown error"}`
+    );
+  }
+  throw lastError ?? new Error(`FREVAR ${context} failed`);
+}
+
 const meta: ProviderMeta = {
   id: "frevar",
   name: "FREVAR",
@@ -34,11 +66,7 @@ const meta: ProviderMeta = {
 async function searchAddress(query: string): Promise<AddressMatch[]> {
   const where = `ADRESSE LIKE '${query.toUpperCase().replace(/'/g, "''")}%' AND KOMMUNEID=3107`;
   const url = `${FREVAR_BASE}/Matrikkel/Eiendomskart/MapServer/0/query?where=${encodeURIComponent(where)}&outFields=ADRESSE&returnGeometry=false&f=json`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`FREVAR address search failed: ${res.status}`);
-  }
-  const data = (await res.json()) as ArcGisResponse<{ ADRESSE: string }>;
+  const data = await fetchArcGis<{ ADRESSE: string }>(url, "address search");
 
   const unique = [...new Set(data.features.map((f) => f.attributes.ADRESSE))];
   return unique.map((addr) => ({
@@ -58,15 +86,10 @@ function getPickups(locationId: string) {
     if (!avtLnr) {
       const agreementWhere = `UPPER(Adresse)='${address.toUpperCase().replace(/'/g, "''")}' AND AvtStatus=0`;
       const agreementUrl = `${FREVAR_BASE}/Renovasjon/MinRenovasjon/MapServer/0/query?where=${encodeURIComponent(agreementWhere)}&outFields=AvtLnr&returnGeometry=false&f=json`;
-      const agreementRes = await fetch(agreementUrl);
-      if (!agreementRes.ok) {
-        throw new Error(
-          `FREVAR agreement lookup failed: ${agreementRes.status}`
-        );
-      }
-      const agreementData = (await agreementRes.json()) as ArcGisResponse<{
-        AvtLnr: number;
-      }>;
+      const agreementData = await fetchArcGis<{ AvtLnr: number }>(
+        agreementUrl,
+        "agreement lookup"
+      );
       const firstFeature = agreementData.features[0];
       if (!firstFeature) {
         throw new Error("FREVAR: no agreement found for address");
@@ -83,15 +106,11 @@ function getPickups(locationId: string) {
 
     const calWhere = `AvtLnr=${avtLnr} AND Dato>=date'${from}' AND Dato<=date'${to}'`;
     const calUrl = `${FREVAR_BASE}/Renovasjon/MinRenovasjon/MapServer/1/query?where=${encodeURIComponent(calWhere)}&outFields=AvtLnr,Dato,AvfallId&returnGeometry=false&f=json`;
-    const calRes = await fetch(calUrl);
-    if (!calRes.ok) {
-      throw new Error(`FREVAR calendar fetch failed: ${calRes.status}`);
-    }
-    const calData = (await calRes.json()) as ArcGisResponse<{
+    const calData = await fetchArcGis<{
       AvfallId: number;
       AvtLnr: number;
       Dato: number;
-    }>;
+    }>(calUrl, "calendar fetch");
 
     const pickups = normalizePickups(
       calData.features.map((f) => {
