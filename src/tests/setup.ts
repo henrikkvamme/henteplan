@@ -56,7 +56,7 @@ export const PROVIDER_FIXTURES: Record<string, string[]> = {
     "Lade allé 1",
     "Dronningens gate 1",
     "Fjordgata 1",
-    "Bispegata 1",
+    "Erling Skakkes gate 1",
     "Nordre gate 1",
   ],
   bir: [
