@@ -14,17 +14,17 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.18.4",
-    "@scalar/hono-api-reference": "^0.5.183",
-    "hono": "^4.7.4",
-    "hono-rate-limiter": "^0.4.2",
+    "@scalar/hono-api-reference": "^0.11.2",
+    "hono": "^4.12.25",
+    "hono-rate-limiter": "^0.5.3",
     "ical-generator": "^8.0.0",
-    "node-html-parser": "^7.0.1",
+    "node-html-parser": "^7.1.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.0",
+    "@biomejs/biome": "^2.4.16",
     "@types/bun": "latest",
     "typescript": "^5.7.3",
-    "ultracite": "^7.2.3"
+    "ultracite": "^7.8.3"
   }
 }
