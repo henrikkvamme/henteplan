@@ -55,7 +55,7 @@ jobs:
           retention-days: 3
       - name: Create issue on failure
         if: steps.smoke.outcome == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const existing = await github.rest.issues.listForRepo({
