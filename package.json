@@ -22,7 +22,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.1",
+    "@biomejs/biome": "^2.5.2",
     "@types/bun": "latest",
     "typescript": "^5.9.3",
     "ultracite": "^7.8.3"
