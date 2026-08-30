@@ -1,5 +1,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { normalizeCategories } from "../fractions/normalize";
 import { getProvider } from "../providers/registry";
+import type { WastePickup } from "../providers/types";
 import { pickupSchema } from "./schemas";
 
 const app = new OpenAPIHono();
@@ -21,6 +23,7 @@ const route = createRoute({
         "application/json": {
           schema: z.object({
             provider: z.string(),
+            categories: z.array(pickupSchema.shape.category),
             pickups: z.array(pickupSchema),
           }),
         },
@@ -31,6 +34,21 @@ const route = createRoute({
     502: { description: "Upstream provider error" },
   },
 });
+
+export function buildScheduleResponse(
+  provider: string,
+  pickups: WastePickup[]
+) {
+  return {
+    provider,
+    categories: [
+      ...new Set(
+        pickups.flatMap((pickup) => normalizeCategories(pickup.fraction))
+      ),
+    ].sort(),
+    pickups,
+  };
+}
 
 app.openapi(route, async (c) => {
   const { provider: providerId, locationId } = c.req.valid("query");
@@ -50,7 +68,7 @@ app.openapi(route, async (c) => {
 
   try {
     const pickups = await provider.getPickups(locationId);
-    return c.json({ provider: providerId, pickups });
+    return c.json(buildScheduleResponse(providerId, pickups));
   } catch (err) {
     return c.json(
       {

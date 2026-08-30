@@ -9,6 +9,7 @@ afterEach(() => {
 const PICKUP: WastePickup = {
   date: "2026-01-01",
   fraction: "Restavfall",
+  fractionId: "residual",
   color: "#000",
   category: "residual",
 };
