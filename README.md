@@ -38,7 +38,7 @@ Base URL: `https://henteplan.no/api/v1`
 | `GET /providers` | List all providers and their municipalities |
 | `GET /detect?postalCode=...` | Auto-detect provider from postal code |
 | `GET /search?provider=...&q=...` | Search addresses within a provider |
-| `GET /schedule?provider=...&locationId=...` | Get pickup schedule |
+| `GET /schedule?provider=...&locationId=...` | Get pickups and available waste categories |
 | `GET /schedule.ics?provider=...&locationId=...` | iCal feed |
 
 ```sh

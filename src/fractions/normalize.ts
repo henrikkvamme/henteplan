@@ -52,8 +52,18 @@ const FRACTION_MAP: Record<string, FractionCategory> = {
   trevirke: "wood",
 };
 
+const COMPOUND_FRACTION_MAP: Record<string, FractionCategory[]> = {
+  "mat-, plast- og restavfall": ["food", "plastic", "residual"],
+  "papir og plast": ["paper", "plastic"],
+};
+
 export function normalizeCategory(fraction: string): FractionCategory {
   return FRACTION_MAP[fraction.toLowerCase()] ?? "other";
+}
+
+export function normalizeCategories(fraction: string): FractionCategory[] {
+  const normalized = fraction.toLowerCase();
+  return COMPOUND_FRACTION_MAP[normalized] ?? [normalizeCategory(normalized)];
 }
 
 export function normalizePickups(

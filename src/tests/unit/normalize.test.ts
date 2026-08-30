@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { CATEGORIES } from "@/fractions/categories";
-import { normalizeCategory, normalizePickups } from "@/fractions/normalize";
+import {
+  normalizeCategories,
+  normalizeCategory,
+  normalizePickups,
+} from "@/fractions/normalize";
 import { VALID_CATEGORIES } from "../setup";
+
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 describe("normalizeCategory", () => {
   test("maps known fractions correctly", () => {
@@ -39,6 +45,16 @@ describe("normalizeCategory", () => {
     expect(normalizeCategory("tekstil")).toBe("textile");
     expect(normalizeCategory("plast")).toBe("plastic");
     expect(normalizeCategory("mat")).toBe("food");
+  });
+
+  test("preserves every waste type in compound provider fractions", () => {
+    expect(normalizeCategories("Mat-, plast- og restavfall")).toEqual([
+      "food",
+      "plastic",
+      "residual",
+    ]);
+    expect(normalizeCategories("Papir og plast")).toEqual(["paper", "plastic"]);
+    expect(normalizeCategories("Glass og metall")).toEqual(["glass_metal"]);
   });
 });
 
@@ -78,7 +94,7 @@ describe("normalizePickups", () => {
   test("all categories have valid colors", () => {
     for (const category of VALID_CATEGORIES) {
       expect(CATEGORIES[category]).toBeDefined();
-      expect(CATEGORIES[category].color).toMatch(/^#[0-9a-fA-F]{6}$/);
+      expect(CATEGORIES[category].color).toMatch(HEX_COLOR);
     }
   });
 });
