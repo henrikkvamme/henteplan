@@ -1,29 +1,36 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { getAllProviders } from "../providers/registry";
-import { providerSchema } from "./schemas";
+import {
+  internalErrorResponse,
+  providersResponseSchema,
+  rateLimitResponse,
+} from "./schemas";
 
 const app = new OpenAPIHono();
 
 const route = createRoute({
   method: "get",
+  operationId: "listProviders",
   path: "/api/v1/providers",
-  tags: ["Providers"],
-  summary: "List all supported waste collection providers",
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: z.object({ providers: z.array(providerSchema) }),
+          schema: providersResponseSchema,
         },
       },
       description: "List of providers",
     },
+    429: rateLimitResponse,
+    500: internalErrorResponse,
   },
+  summary: "List all supported waste collection providers",
+  tags: ["Providers"],
 });
 
 app.openapi(route, (c) => {
   const providers = getAllProviders().map((p) => p.meta);
-  return c.json({ providers });
+  return c.json({ providers }, 200);
 });
 
 export { app as providersRoute };

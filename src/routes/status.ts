@@ -1,4 +1,4 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { getAllProviders } from "../providers/registry";
 import {
   getLatestChecks,
@@ -6,66 +6,89 @@ import {
   getProviderUptime,
   reportChecks,
 } from "../status/db";
+import {
+  apiKeyErrorSchema,
+  internalErrorResponse,
+  statusReportRequestSchema,
+  statusReportResponseSchema,
+  statusResponseSchema,
+  validationErrorResponse,
+} from "./schemas";
 
 const app = new OpenAPIHono();
 
-// POST /api/v1/status/report — CI posts smoke test results (API key protected)
-app.post("/api/v1/status/report", async (c) => {
+const statusReportRoute = createRoute({
+  description: "API-key-protected endpoint used by Henteplan monitoring.",
+  method: "post",
+  operationId: "reportProviderStatus",
+  path: "/api/v1/status/report",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: statusReportRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: statusReportResponseSchema,
+        },
+      },
+      description: "Status report recorded",
+    },
+    400: validationErrorResponse,
+    403: {
+      content: {
+        "application/json": {
+          schema: apiKeyErrorSchema,
+        },
+      },
+      description: "API key required",
+    },
+    500: internalErrorResponse,
+  },
+  security: [{ ApiKeyAuth: [] }],
+  summary: "Record provider smoke-test results",
+  tags: ["Status"],
+});
+
+app.openapi(statusReportRoute, (c) => {
   const key = c.req.header("x-api-key");
   const validKeys = (process.env.HENTEPLAN_API_KEYS ?? "")
     .split(",")
     .filter(Boolean);
   if (!(key && validKeys.includes(key))) {
-    return c.json({ error: "API key required" }, 403);
+    return c.json({ error: "API key required" as const }, 403);
   }
 
-  const body = await c.req.json<{
-    checks: {
-      providerId: string;
-      total: number;
-      passed: number;
-      errors?: string[];
-    }[];
-    checkedAt?: string;
-  }>();
+  const body = c.req.valid("json");
   reportChecks(body.checks, body.checkedAt);
-  return c.json({ ok: true });
+  return c.json({ ok: true as const }, 200);
 });
 
-// GET /api/v1/status — public status overview
+// GET /api/v1/status - public status overview
 const statusRoute = createRoute({
   method: "get",
+  operationId: "getProviderStatus",
   path: "/api/v1/status",
-  tags: ["Status"],
-  summary: "Get provider status and uptime",
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: z.object({
-            providers: z.array(
-              z.object({
-                id: z.string(),
-                name: z.string(),
-                status: z.enum(["up", "degraded", "down", "unknown"]),
-                lastChecked: z.string().nullable(),
-                uptime30d: z.number().nullable(),
-                history: z.array(
-                  z.object({
-                    checkedAt: z.string(),
-                    status: z.string(),
-                    passed: z.number(),
-                    total: z.number(),
-                  })
-                ),
-              })
-            ),
-          }),
+          schema: statusResponseSchema,
         },
       },
       description: "Provider status overview",
     },
+    500: internalErrorResponse,
   },
+  summary: "Get provider status and uptime",
+  tags: ["Status"],
 });
 
 app.openapi(statusRoute, (c) => {
@@ -77,27 +100,24 @@ app.openapi(statusRoute, (c) => {
     const latest = latestMap.get(p.id);
     const history = getProviderHistory(p.id, 90);
     const uptime = getProviderUptime(p.id, 30);
+    const status = latest ? latest.status : ("unknown" as const);
 
     return {
-      id: p.id,
-      name: p.meta.name,
-      status: (latest?.status ?? "unknown") as
-        | "up"
-        | "degraded"
-        | "down"
-        | "unknown",
-      lastChecked: latest?.checked_at ?? null,
-      uptime30d: uptime === -1 ? null : Math.round(uptime * 10_000) / 100, // noinspection MagicNumber
       history: history.map((h) => ({
         checkedAt: h.checked_at,
-        status: h.status,
         passed: h.passed,
+        status: h.status,
         total: h.total,
       })),
+      id: p.id,
+      lastChecked: latest?.checked_at ?? null,
+      name: p.meta.name,
+      status,
+      uptime30d: uptime === -1 ? null : Math.round(uptime * 10_000) / 100, // noinspection MagicNumber
     };
   });
 
-  return c.json({ providers });
+  return c.json({ providers }, 200);
 });
 
 export { app as statusRoute };

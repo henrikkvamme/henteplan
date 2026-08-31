@@ -19,13 +19,15 @@ const stmtInsert = db.prepare(
   "INSERT INTO provider_checks (provider_id, checked_at, total, passed, status, errors) VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
 );
 
+type ProviderCheckStatus = "up" | "degraded" | "down";
+
 const stmtLatest = db.prepare<
   {
     provider_id: string;
     checked_at: string;
     total: number;
     passed: number;
-    status: string;
+    status: ProviderCheckStatus;
     errors: string | null;
   },
   []
@@ -39,7 +41,12 @@ const stmtLatest = db.prepare<
 `);
 
 const stmtHistory = db.prepare<
-  { checked_at: string; total: number; passed: number; status: string },
+  {
+    checked_at: string;
+    total: number;
+    passed: number;
+    status: ProviderCheckStatus;
+  },
   [string, number]
 >(`
   SELECT checked_at, total, passed, status
@@ -68,7 +75,7 @@ interface CheckReport {
   total: number;
 }
 
-function deriveStatus(total: number, passed: number): string {
+function deriveStatus(total: number, passed: number): ProviderCheckStatus {
   if (passed === total) {
     return "up";
   }

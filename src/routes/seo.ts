@@ -73,7 +73,7 @@ Sitemap: ${SITE_URL}/sitemap.xml
 });
 
 app.get("/sitemap.xml", (c) => {
-  const today = new Date().toISOString().split("T")[0];
+  const [today] = new Date().toISOString().split("T");
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -245,7 +245,7 @@ Get the waste collection schedule for an address.
 - \`provider\` (string) — Provider ID
 - \`locationId\` (string) — Location ID from search results
 
-**Response:** Array of pickup objects with date, fraction, category, color, and fractionId.
+**Response:** Object containing the provider ID, a sorted unique \`categories\` array for the requested address, and a \`pickups\` array. Compound provider fractions contribute every applicable canonical category.
 
 ### GET /api/v1/schedule.ics
 
@@ -283,6 +283,10 @@ The API normalizes waste fractions into standard categories:
 Get health status and uptime data for all providers.
 
 **Response:** Array of provider status objects with status ("up", "degraded", "down", "unknown"), uptime30d percentage, lastChecked timestamp, and history array.
+
+### POST /api/v1/status/report
+
+Record provider smoke-test results. This monitoring endpoint requires an API key in the \`x-api-key\` header.
 
 ## Rate Limits
 
@@ -325,74 +329,74 @@ ${fence}
   return c.text(body, 200, { "Content-Type": "text/plain; charset=utf-8" });
 });
 
-app.get("/.well-known/llm-index.json", (c) => {
-  return c.json({
-    name: SITE_NAME,
+app.get("/.well-known/llm-index.json", (c) =>
+  c.json({
     description:
       "Norwegian waste collection schedule API covering 13+ providers and 200+ municipalities.",
-    url: SITE_URL,
     documentation: `${SITE_URL}/docs`,
-    openapi: `${SITE_URL}/openapi.json`,
-    llms_txt: `${SITE_URL}/llms.txt`,
-    llms_full_txt: `${SITE_URL}/llms-full.txt`,
     endpoints: [
       {
-        path: "/api/v1/providers",
-        method: "GET",
         description: "List all supported waste collection providers",
+        method: "GET",
+        path: "/api/v1/providers",
       },
       {
-        path: "/api/v1/detect",
-        method: "GET",
         description: "Auto-detect provider for a postal code",
+        method: "GET",
+        path: "/api/v1/detect",
       },
       {
-        path: "/api/v1/search",
-        method: "GET",
         description: "Search for addresses within a provider",
+        method: "GET",
+        path: "/api/v1/search",
       },
       {
-        path: "/api/v1/schedule",
-        method: "GET",
         description: "Get waste collection schedule for an address",
+        method: "GET",
+        path: "/api/v1/schedule",
       },
       {
-        path: "/api/v1/schedule.ics",
-        method: "GET",
         description: "Download schedule as iCal calendar",
+        method: "GET",
+        path: "/api/v1/schedule.ics",
       },
       {
-        path: "/api/v1/status",
-        method: "GET",
         description: "Provider health status and uptime data",
+        method: "GET",
+        path: "/api/v1/status",
       },
     ],
-  });
-});
+    llms_full_txt: `${SITE_URL}/llms-full.txt`,
+    llms_txt: `${SITE_URL}/llms.txt`,
+    name: SITE_NAME,
+    openapi: `${SITE_URL}/openapi.json`,
+    url: SITE_URL,
+  })
+);
 
-app.get("/manifest.webmanifest", (c) => {
-  return c.json({
-    name: "Henteplan — Finn din renovasjonskalender",
-    short_name: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    start_url: "/",
-    display: "standalone",
-    theme_color: "#2A7C6F",
+app.get("/manifest.webmanifest", (c) =>
+  c.json({
     background_color: "#FAF7F2",
-    lang: "nb",
+    description: SITE_DESCRIPTION,
+    display: "standalone",
     icons: [
       {
-        src: "/assets/icon-192.png",
         sizes: "192x192",
+        src: "/assets/icon-192.png",
         type: "image/png",
       },
       {
-        src: "/assets/icon-512.png",
         sizes: "512x512",
+        src: "/assets/icon-512.png",
         type: "image/png",
       },
     ],
-  });
-});
+    lang: "nb",
+    name: "Henteplan — Finn din renovasjonskalender",
+    short_name: SITE_NAME,
+    start_url: "/",
+    theme_color: "#2A7C6F",
+  })
+);
 
 export { app as seoRoutes };
