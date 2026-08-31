@@ -16,6 +16,11 @@ import { statusRoute } from "./routes/status";
 
 export function createApp() {
   const app = new OpenAPIHono();
+  app.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
+    in: "header",
+    name: "x-api-key",
+    type: "apiKey",
+  });
 
   // Global middleware
   app.use("*", cors());
@@ -49,43 +54,32 @@ export function createApp() {
 
   // OpenAPI spec
   app.doc("/openapi.json", {
-    openapi: "3.1.0",
-    info: {
-      title: "Henteplan API",
-      version: "0.1.0",
-      description:
-        "Open API for Norwegian waste collection schedules. Supports 13 providers covering 200+ municipalities.",
-      contact: {
-        name: "Henteplan",
-        url: "https://henteplan.no",
-      },
-      license: {
-        name: "MIT",
-        url: "https://github.com/henrikkvamme/henteplan/blob/main/LICENSE",
-      },
-    },
-    servers: [{ url: "https://henteplan.no", description: "Production" }],
     externalDocs: {
       description: "Full documentation (LLM-optimized)",
       url: "https://henteplan.no/llms-full.txt",
     },
+    info: {
+      contact: {
+        name: "Henteplan",
+        url: "https://henteplan.no",
+      },
+      description:
+        "Open API for Norwegian waste collection schedules. Supports 13 providers covering 200+ municipalities.",
+      license: {
+        name: "MIT",
+        url: "https://github.com/henrikkvamme/henteplan/blob/main/LICENSE",
+      },
+      title: "Henteplan API",
+      version: "0.1.0",
+    },
+    openapi: "3.1.0",
+    servers: [{ description: "Production", url: "https://henteplan.no" }],
   });
 
   // Scalar docs
   app.get(
     "/docs",
     apiReference({
-      spec: { url: "/openapi.json" },
-      theme: "kepler",
-      pageTitle: "Henteplan API",
-      favicon: "/assets/favicon.svg",
-      metaData: {
-        title: "Henteplan API Documentation",
-        description:
-          "Interactive API docs for Norwegian waste collection schedules.",
-      },
-      defaultHttpClient: { targetKey: "js", clientKey: "fetch" },
-      hiddenClients: ["powershell", "objc", "ocaml", "r", "clojure", "c"],
       customCss: `
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600&display=swap');
         .light-mode {
@@ -111,6 +105,17 @@ export function createApp() {
         }
         .scalar-app .section-header-intro-key { font-family: 'Fraunces', Georgia, serif; }
       `,
+      defaultHttpClient: { clientKey: "fetch", targetKey: "js" },
+      favicon: "/assets/favicon.svg",
+      hiddenClients: ["powershell", "objc", "ocaml", "r", "clojure", "c"],
+      metaData: {
+        description:
+          "Interactive API docs for Norwegian waste collection schedules.",
+        title: "Henteplan API Documentation",
+      },
+      pageTitle: "Henteplan API",
+      spec: { url: "/openapi.json" },
+      theme: "kepler",
     })
   );
 
@@ -119,11 +124,13 @@ export function createApp() {
   app.get("/assets/:filename", async (c) => {
     const filename = c.req.param("filename");
     const file = Bun.file(`${assetsDir}${filename}`);
-    if (!(await file.exists())) return c.notFound();
+    if (!(await file.exists())) {
+      return c.notFound();
+    }
     return new Response(file, {
       headers: {
-        "Content-Type": file.type,
         "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Type": file.type,
       },
     });
   });

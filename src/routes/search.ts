@@ -1,32 +1,53 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { getAllProviders, getProvider } from "../providers/registry";
-import { addressMatchSchema } from "./schemas";
+import {
+  apiErrorResponse,
+  internalErrorResponse,
+  rateLimitResponse,
+  searchResponseSchema,
+  validationErrorResponse,
+} from "./schemas";
 
 const app = new OpenAPIHono();
 
 const route = createRoute({
-  method: "get",
-  path: "/api/v1/search",
-  tags: ["Search"],
-  summary: "Search for addresses",
   description: "Search for addresses across all providers, or a specific one",
+  method: "get",
+  operationId: "searchAddresses",
+  path: "/api/v1/search",
   request: {
     query: z.object({
-      q: z.string().min(2).openapi({ example: "Kongens gate 1" }),
-      provider: z.string().optional().openapi({ example: "trv" }),
+      provider: z.string().min(1).optional().openapi({
+        description: "Optional provider ID. Omit to search every provider.",
+        example: "trv",
+      }),
+      q: z.string().min(2).openapi({
+        description: "Address query. At least two characters are required.",
+        example: "Kongens gate 1",
+      }),
     }),
   },
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: z.object({ results: z.array(addressMatchSchema) }),
+          schema: searchResponseSchema,
         },
       },
       description: "Search results",
     },
-    400: { description: "Invalid query" },
+    400: validationErrorResponse,
+    404: apiErrorResponse("Provider not found", {
+      error: {
+        code: "PROVIDER_NOT_FOUND",
+        message: "Unknown provider: example",
+      },
+    }),
+    429: rateLimitResponse,
+    500: internalErrorResponse,
   },
+  summary: "Search for addresses",
+  tags: ["Search"],
 });
 
 app.openapi(route, async (c) => {
@@ -47,9 +68,12 @@ app.openapi(route, async (c) => {
       );
     }
     const matches = await provider.searchAddress(q);
-    return c.json({
-      results: matches.map((m) => ({ ...m, provider: providerId })),
-    });
+    return c.json(
+      {
+        results: matches.map((m) => ({ ...m, provider: providerId })),
+      },
+      200
+    );
   }
 
   // Search all providers in parallel
@@ -66,7 +90,7 @@ app.openapi(route, async (c) => {
     .filter((r): r is PromiseFulfilledResult<any[]> => r.status === "fulfilled")
     .flatMap((r) => r.value);
 
-  return c.json({ results: allResults });
+  return c.json({ results: allResults }, 200);
 });
 
 export { app as searchRoute };
