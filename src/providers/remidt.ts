@@ -1,4 +1,4 @@
-import { normalizePickups } from "../fractions/normalize";
+import { normalizePickups } from "../fractions/classifier";
 import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
@@ -60,6 +60,7 @@ function getPickups(locationId: string) {
 
     const today = new Date().toISOString().slice(0, 10);
     const pickups = normalizePickups(
+      "remidt",
       data.disposals
         .filter((d) => d.date.slice(0, 10) >= today)
         .map((d) => ({

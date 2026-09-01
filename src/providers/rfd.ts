@@ -1,4 +1,4 @@
-import { normalizePickups } from "../fractions/normalize";
+import { normalizePickups } from "../fractions/classifier";
 import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
@@ -79,6 +79,7 @@ function getPickups(locationId: string) {
 
     const today = new Date().toISOString().slice(0, 10);
     const pickups = normalizePickups(
+      "rfd",
       data.fetchDays.flatMap((entry) => {
         const fraction =
           RFD_FRACTION_MAP[entry.fraksjonId] ?? `Fraksjon ${entry.fraksjonId}`;

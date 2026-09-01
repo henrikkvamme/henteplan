@@ -1,4 +1,4 @@
-import { normalizePickups } from "../fractions/normalize";
+import { normalizePickups } from "../fractions/classifier";
 import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
@@ -53,6 +53,7 @@ function getPickups(locationId: string) {
 
     const today = new Date().toISOString().slice(0, 10);
     const pickups = normalizePickups(
+      "avfallsor",
       (data.collections ?? [])
         .flatMap((c) => c.items)
         .filter((item) => item.dato >= today)

@@ -1,5 +1,4 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { normalizeCategories } from "../fractions/normalize";
 import { getProvider } from "../providers/registry";
 import type { WastePickup } from "../providers/types";
 import {
@@ -65,9 +64,7 @@ export function buildScheduleResponse(
 ) {
   return {
     categories: [
-      ...new Set(
-        pickups.flatMap((pickup) => normalizeCategories(pickup.fraction))
-      ),
+      ...new Set(pickups.flatMap((pickup) => pickup.categories)),
     ].sort(),
     pickups,
     provider,

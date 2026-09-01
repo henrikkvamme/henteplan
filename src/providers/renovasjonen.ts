@@ -1,5 +1,5 @@
 import { parse as parseHtml } from "node-html-parser";
-import { normalizePickups } from "../fractions/normalize";
+import { normalizePickups } from "../fractions/classifier";
 import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
@@ -130,6 +130,7 @@ function getPickups(locationId: string) {
 
     const today = new Date().toISOString().slice(0, 10);
     const pickups = normalizePickups(
+      "renovasjonen",
       parseRenovasjonenCalendarHtml(html).filter((p) => p.date >= today)
     );
 

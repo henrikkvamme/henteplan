@@ -1,4 +1,4 @@
-import { normalizePickups } from "../fractions/normalize";
+import { normalizePickups } from "../fractions/classifier";
 import { withFallback, withGenericFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
@@ -216,6 +216,7 @@ function getPickups(locationId: string) {
 
     const today = from;
     const pickups = normalizePickups(
+      "norkart",
       calendar.flatMap((entry) => {
         const fractionName =
           fractionMap.get(entry.FraksjonId) ?? `Fraksjon ${entry.FraksjonId}`;

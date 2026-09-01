@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "check": "bunx biome check src/",
+    "classifier:apply": "bun run src/fractions/cli.ts apply",
+    "classifier:pending": "bun run src/fractions/cli.ts pending",
+    "classifier:scan": "bun run src/fractions/cli.ts scan",
     "dev": "bun run --hot src/index.ts",
+    "fix": "bunx biome check --fix src/",
     "start": "bun run src/index.ts",
     "test": "bun test src/tests/unit src/tests/integration",
-    "test:smoke": "bun test src/tests/e2e --timeout 360000",
     "test:all": "bun test src/tests --timeout 360000",
-    "check": "bunx biome check src/",
-    "fix": "bunx biome check --fix src/",
+    "test:smoke": "bun test src/tests/e2e --timeout 360000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

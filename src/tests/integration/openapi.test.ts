@@ -36,8 +36,6 @@ interface OpenAPISpec {
 }
 
 const expectedCategories = [
-  "carton",
-  "christmas_tree",
   "food",
   "garden",
   "glass_metal",
@@ -46,8 +44,6 @@ const expectedCategories = [
   "paper",
   "plastic",
   "residual",
-  "textile",
-  "wood",
 ];
 
 async function loadSpec(): Promise<OpenAPISpec> {
@@ -101,6 +97,11 @@ describe("OpenAPI contract", () => {
 
     const pickupCategory = spec.components.schemas.Pickup.properties?.category;
     expect(pickupCategory?.$ref).toBe("#/components/schemas/WasteCategory");
+    const pickupCategories =
+      spec.components.schemas.Pickup.properties?.categories;
+    expect(pickupCategories?.items?.$ref).toBe(
+      "#/components/schemas/WasteCategory"
+    );
 
     const scheduleCategories =
       spec.components.schemas.Schedule.properties?.categories;

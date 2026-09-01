@@ -25,7 +25,7 @@
 - **265+ municipalities** covered across Norway
 - **iCal feeds** — subscribe in any calendar app
 - **Auto-detect** — resolve provider from address or postal code
-- **Self-healing CI** — when smoke tests fail, [Claude Code](https://claude.ai/code) automatically diagnoses and patches broken providers
+- **Self-healing classification** - unknown provider labels are collected and reviewed nightly through validated, provider-scoped routes
 
 ---
 
@@ -47,6 +47,8 @@ curl "https://henteplan.no/api/v1/search?provider=trv&q=Kongens+gate+1"
 ```
 
 Interactive docs at [henteplan.no/docs](https://henteplan.no/docs).
+
+Fraction classification, compound pickups, and the guarded learning loop are documented in [`docs/CLASSIFIER.md`](docs/CLASSIFIER.md).
 
 <details>
 <summary><strong>Supported providers (13)</strong></summary>

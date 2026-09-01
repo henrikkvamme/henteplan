@@ -1,4 +1,4 @@
-import { normalizePickups } from "../fractions/normalize";
+import { normalizePickups } from "../fractions/classifier";
 import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
@@ -69,7 +69,7 @@ function getPickups(locationId: string) {
       }
     }
 
-    const pickups = normalizePickups(raw);
+    const pickups = normalizePickups("innherred", raw);
     pickups.sort((a, b) => a.date.localeCompare(b.date));
     return pickups;
   });

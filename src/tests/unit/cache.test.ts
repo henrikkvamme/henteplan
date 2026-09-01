@@ -1,24 +1,81 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { db, withFallback, withGenericFallback } from "@/providers/cache";
+import { scanCachedFractionLabels } from "@/fractions/classifier";
+import { withFallback, withGenericFallback } from "@/providers/cache";
 import type { WastePickup } from "@/providers/types";
+import { db } from "@/storage/database";
 
 afterEach(() => {
   db.exec("DELETE FROM cache");
 });
 
 const PICKUP: WastePickup = {
+  categories: ["residual"],
+  category: "residual",
+  color: "#71717a",
   date: "2026-01-01",
   fraction: "Restavfall",
   fractionId: "residual",
-  color: "#000",
-  category: "residual",
 };
 
 describe("withFallback", () => {
+  test("scans and upgrades existing schedule cache entries without exposing keys", () => {
+    db.exec("INSERT INTO cache (key, data, expires_at) VALUES (?1, ?2, ?3)", [
+      "test:private-location",
+      JSON.stringify([
+        {
+          category: "other",
+          color: "#a1a1aa",
+          date: "2026-01-01",
+          fraction: "Papir og plastemballasje",
+          fractionId: "compound",
+        },
+      ]),
+      Date.now() + 60_000,
+    ]);
+
+    expect(scanCachedFractionLabels()).toEqual({
+      cacheEntries: 1,
+      labels: 1,
+      pickups: 1,
+    });
+    const stored = db
+      .query<{ data: string }, []>("SELECT data FROM cache LIMIT 1")
+      .get();
+    expect(JSON.parse(stored?.data ?? "[]")[0]).toMatchObject({
+      categories: ["paper", "plastic"],
+      category: "paper",
+    });
+  });
+
+  test("upgrades cached singular-category pickups", async () => {
+    db.exec("INSERT INTO cache (key, data, expires_at) VALUES (?1, ?2, ?3)", [
+      "test:legacy",
+      JSON.stringify([
+        {
+          category: "paper",
+          color: "#3b82f6",
+          date: "2026-01-01",
+          fraction: "Papir og plastemballasje",
+          fractionId: "legacy",
+        },
+      ]),
+      Date.now() + 60_000,
+    ]);
+
+    const result = await withFallback("test:legacy", () =>
+      Promise.reject(new Error("fresh fetch should not run"))
+    );
+
+    expect(result[0]).toMatchObject({
+      categories: ["paper", "plastic"],
+      category: "paper",
+    });
+  });
+
   test("caches successful fetch", async () => {
     let calls = 0;
     const fetcher = () => {
-      calls++;
+      calls += 1;
       return Promise.resolve([PICKUP]);
     };
 
@@ -62,7 +119,7 @@ describe("withGenericFallback", () => {
   test("caches successful fetch", async () => {
     let calls = 0;
     const fetcher = () => {
-      calls++;
+      calls += 1;
       return Promise.resolve(["a", "b"]);
     };
 
