@@ -1,4 +1,4 @@
-import { normalizePickups } from "../fractions/normalize";
+import { normalizePickups } from "../fractions/classifier";
 import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
@@ -113,6 +113,7 @@ function getPickups(locationId: string) {
     }>(calUrl, "calendar fetch");
 
     const pickups = normalizePickups(
+      "frevar",
       calData.features.map((f) => {
         const date = new Date(f.attributes.Dato).toISOString().slice(0, 10);
         const fraction =

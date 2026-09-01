@@ -1,60 +1,61 @@
 import { describe, expect, test } from "bun:test";
 import { CATEGORIES } from "@/fractions/categories";
-import {
-  normalizeCategories,
-  normalizeCategory,
-  normalizePickups,
-} from "@/fractions/normalize";
+import { classifyFraction, normalizePickups } from "@/fractions/classifier";
 import { VALID_CATEGORIES } from "../setup";
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
-describe("normalizeCategory", () => {
+describe("classifyFraction", () => {
   test("maps known fractions correctly", () => {
-    expect(normalizeCategory("restavfall")).toBe("residual");
-    expect(normalizeCategory("papir")).toBe("paper");
-    expect(normalizeCategory("plastemballasje")).toBe("plastic");
-    expect(normalizeCategory("matavfall")).toBe("food");
-    expect(normalizeCategory("glass og metallemballasje")).toBe("glass_metal");
-    expect(normalizeCategory("drikkekartonger")).toBe("carton");
-    expect(normalizeCategory("farlig avfall")).toBe("hazardous");
-    expect(normalizeCategory("tekstiler")).toBe("textile");
-    expect(normalizeCategory("hageavfall")).toBe("garden");
-    expect(normalizeCategory("juletre")).toBe("christmas_tree");
-    expect(normalizeCategory("trevirke")).toBe("wood");
+    const category = (fraction: string) =>
+      classifyFraction({ fraction, providerId: "test" }).primaryCategory;
+    expect(category("restavfall")).toBe("residual");
+    expect(category("papir")).toBe("paper");
+    expect(category("plastemballasje")).toBe("plastic");
+    expect(category("matavfall")).toBe("food");
+    expect(category("glass og metallemballasje")).toBe("glass_metal");
+    expect(category("farlig avfall")).toBe("hazardous");
+    expect(category("hageavfall")).toBe("garden");
   });
 
   test("is case insensitive", () => {
-    expect(normalizeCategory("Restavfall")).toBe("residual");
-    expect(normalizeCategory("PAPIR")).toBe("paper");
-    expect(normalizeCategory("Matavfall")).toBe("food");
-    expect(normalizeCategory("Glass Og Metallemballasje")).toBe("glass_metal");
+    const category = (fraction: string) =>
+      classifyFraction({ fraction, providerId: "test" }).primaryCategory;
+    expect(category("Restavfall")).toBe("residual");
+    expect(category("PAPIR")).toBe("paper");
+    expect(category("Matavfall")).toBe("food");
+    expect(category("Glass Og Metallemballasje")).toBe("glass_metal");
   });
 
   test("returns 'other' for unknown fractions", () => {
-    expect(normalizeCategory("ukjent")).toBe("other");
-    expect(normalizeCategory("")).toBe("other");
-    expect(normalizeCategory("something random")).toBe("other");
+    const category = (fraction: string) =>
+      classifyFraction({ fraction, providerId: "test" }).primaryCategory;
+    expect(category("ukjent")).toBe("other");
+    expect(category("")).toBe("other");
+    expect(category("something random")).toBe("other");
   });
 
   test("handles alternate spellings", () => {
-    expect(normalizeCategory("rest")).toBe("residual");
-    expect(normalizeCategory("papp og papir")).toBe("paper");
-    expect(normalizeCategory("bioavfall")).toBe("food");
-    expect(normalizeCategory("glass- og metallemballasje")).toBe("glass_metal");
-    expect(normalizeCategory("tekstil")).toBe("textile");
-    expect(normalizeCategory("plast")).toBe("plastic");
-    expect(normalizeCategory("mat")).toBe("food");
+    const category = (fraction: string) =>
+      classifyFraction({ fraction, providerId: "test" }).primaryCategory;
+    expect(category("rest")).toBe("residual");
+    expect(category("papp og papir")).toBe("paper");
+    expect(category("bioavfall")).toBe("food");
+    expect(category("glass- og metallemballasje")).toBe("glass_metal");
+    expect(category("plast")).toBe("plastic");
+    expect(category("mat")).toBe("food");
   });
 
   test("preserves every waste type in compound provider fractions", () => {
-    expect(normalizeCategories("Mat-, plast- og restavfall")).toEqual([
+    const categories = (fraction: string) =>
+      classifyFraction({ fraction, providerId: "test" }).categories;
+    expect(categories("Mat-, plast- og restavfall")).toEqual([
       "food",
       "plastic",
       "residual",
     ]);
-    expect(normalizeCategories("Papir og plast")).toEqual(["paper", "plastic"]);
-    expect(normalizeCategories("Glass og metall")).toEqual(["glass_metal"]);
+    expect(categories("Papir og plast")).toEqual(["paper", "plastic"]);
+    expect(categories("Glass og metall")).toEqual(["glass_metal"]);
   });
 });
 
@@ -64,10 +65,11 @@ describe("normalizePickups", () => {
       { date: "2026-03-05", fraction: "Restavfall", fractionId: "1" },
       { date: "2026-03-06", fraction: "Papir", fractionId: "2" },
     ];
-    const result = normalizePickups(raw);
+    const result = normalizePickups("test", raw);
 
     expect(result).toHaveLength(2);
     expect(result[0].category).toBe("residual");
+    expect(result[0].categories).toEqual(["residual"]);
     expect(result[0].color).toBe(CATEGORIES.residual.color);
     expect(result[0].date).toBe("2026-03-05");
     expect(result[0].fraction).toBe("Restavfall");
@@ -81,14 +83,14 @@ describe("normalizePickups", () => {
     const raw = [
       { date: "2026-04-01", fraction: "Spesialavfall", fractionId: "99" },
     ];
-    const result = normalizePickups(raw);
+    const result = normalizePickups("test", raw);
 
     expect(result[0].category).toBe("other");
     expect(result[0].color).toBe(CATEGORIES.other.color);
   });
 
   test("handles empty array", () => {
-    expect(normalizePickups([])).toEqual([]);
+    expect(normalizePickups("test", [])).toEqual([]);
   });
 
   test("all categories have valid colors", () => {

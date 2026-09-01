@@ -2,8 +2,6 @@ import { z } from "@hono/zod-openapi";
 import type { FractionCategory } from "../providers/types";
 
 export const wasteCategoryValues = [
-  "carton",
-  "christmas_tree",
   "food",
   "garden",
   "glass_metal",
@@ -12,8 +10,6 @@ export const wasteCategoryValues = [
   "paper",
   "plastic",
   "residual",
-  "textile",
-  "wood",
 ] as const satisfies readonly FractionCategory[];
 
 export const wasteCategorySchema = z
@@ -41,6 +37,14 @@ export const providerCheckStatusSchema = z
 
 export const pickupSchema = z
   .object({
+    categories: z
+      .array(wasteCategorySchema)
+      .min(1)
+      .openapi({
+        description:
+          "Every canonical waste category represented by this pickup. Compound fractions contain multiple values.",
+        example: ["paper", "plastic"],
+      }),
     category: wasteCategorySchema,
     color: z
       .string()
@@ -63,7 +67,10 @@ export const pickupSchema = z
       example: "2",
     }),
   })
-  .openapi("Pickup");
+  .openapi("Pickup", {
+    description:
+      "A dated collection. Use categories for filtering compound fractions; category is the backward-compatible primary category.",
+  });
 
 export const addressMatchSchema = z
   .object({

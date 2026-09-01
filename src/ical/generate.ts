@@ -9,22 +9,28 @@ export function generateIcal(
 ): string {
   // noinspection MagicNumber
   const calendar = ical({
-    name: `Henteplan - ${providerId}`,
     description: `Renovasjonskalender (${providerId})`,
     method: ICalCalendarMethod.PUBLISH,
+    name: `Henteplan - ${providerId}`,
     timezone: "Europe/Oslo",
     ttl: 6 * 60 * 60,
   });
 
   for (const pickup of pickups) {
-    const categoryInfo = CATEGORIES[pickup.category];
+    const categoryInfos = pickup.categories.map(
+      (category) => CATEGORIES[category]
+    );
     calendar.createEvent({
+      allDay: true,
+      categories: categoryInfos.map((category) => ({
+        name: category.displayName,
+      })),
+      description: categoryInfos
+        .map((category) => category.displayName)
+        .join(", "),
       id: `${providerId}:${locationId}:${pickup.date}:${pickup.fractionId}@henteplan.no`,
       start: new Date(pickup.date),
-      allDay: true,
       summary: pickup.fraction,
-      description: categoryInfo.displayName,
-      categories: [{ name: categoryInfo.displayName }],
     });
   }
 

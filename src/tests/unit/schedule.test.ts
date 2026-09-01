@@ -6,6 +6,7 @@ describe("schedule response", () => {
   test("exposes the unique normalized categories available at the address", () => {
     const pickups: WastePickup[] = [
       {
+        categories: ["food", "plastic", "residual"],
         category: "residual",
         color: "#71717a",
         date: "2030-01-02",
@@ -13,6 +14,7 @@ describe("schedule response", () => {
         fractionId: "residual",
       },
       {
+        categories: ["food"],
         category: "food",
         color: "#10b981",
         date: "2030-01-02",
@@ -20,6 +22,7 @@ describe("schedule response", () => {
         fractionId: "food",
       },
       {
+        categories: ["residual"],
         category: "residual",
         color: "#71717a",
         date: "2030-01-09",
@@ -27,6 +30,7 @@ describe("schedule response", () => {
         fractionId: "residual",
       },
       {
+        categories: ["glass_metal"],
         category: "glass_metal",
         color: "#0d9488",
         date: "2030-02-01",
@@ -36,9 +40,9 @@ describe("schedule response", () => {
     ];
 
     expect(buildScheduleResponse("trv", pickups)).toEqual({
-      provider: "trv",
       categories: ["food", "glass_metal", "plastic", "residual"],
       pickups,
+      provider: "trv",
     });
   });
 });

@@ -272,11 +272,9 @@ The API normalizes waste fractions into standard categories:
 - \`glass_metal\` — Glass og metallemballasje
 - \`garden\` — Hageavfall (garden waste)
 - \`hazardous\` — Farlig avfall (hazardous waste)
-- \`textile\` — Tekstiler (textiles)
-- \`carton\` — Drikkekartong (beverage cartons)
-- \`wood\` — Trevirke (wood)
-- \`christmas_tree\` — Juletre (Christmas trees)
 - \`other\` — Annet (other/miscellaneous)
+
+Each pickup contains a \`categories\` array. Compound labels such as paper and plastic packaging include every represented category. The singular \`category\` field is retained for backward compatibility.
 
 ### GET /api/v1/status
 

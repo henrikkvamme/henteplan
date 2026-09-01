@@ -1,4 +1,4 @@
-import { normalizePickups } from "../fractions/normalize";
+import { normalizePickups } from "../fractions/classifier";
 import { withFallback } from "./cache";
 import type { AddressMatch, ProviderMeta, WasteProvider } from "./types";
 
@@ -118,6 +118,7 @@ function getPickups(locationId: string) {
     const data = (await res.json()) as BirPickupEntry[];
 
     return normalizePickups(
+      "bir",
       data.map((e) => ({
         date: e.dato.slice(0, 10),
         fraction: e.fraksjon,

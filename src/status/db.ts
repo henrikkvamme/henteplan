@@ -1,4 +1,4 @@
-import { db } from "../providers/cache";
+import { db } from "../storage/database";
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS provider_checks (

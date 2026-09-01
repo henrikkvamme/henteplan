@@ -1,6 +1,4 @@
 export type FractionCategory =
-  | "carton"
-  | "christmas_tree"
   | "food"
   | "garden"
   | "glass_metal"
@@ -8,11 +6,11 @@ export type FractionCategory =
   | "other"
   | "paper"
   | "plastic"
-  | "residual"
-  | "textile"
-  | "wood";
+  | "residual";
 
 export interface WastePickup {
+  /** Every normalized category represented by this pickup */
+  categories: FractionCategory[];
   /** Normalized canonical category ID */
   category: FractionCategory;
   /** Hex color for the category */

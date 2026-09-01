@@ -4,9 +4,10 @@ import type { FractionCategory } from "@/providers/types";
 
 export const app = createApp();
 
+const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+const hexColorPattern = /^#[0-9a-fA-F]{6}$/;
+
 export const VALID_CATEGORIES: Set<FractionCategory> = new Set([
-  "carton",
-  "christmas_tree",
   "food",
   "garden",
   "glass_metal",
@@ -15,8 +16,6 @@ export const VALID_CATEGORIES: Set<FractionCategory> = new Set([
   "paper",
   "plastic",
   "residual",
-  "textile",
-  "wood",
 ]);
 
 export function assertValidPickup(pickup: Record<string, unknown>) {
@@ -24,16 +23,22 @@ export function assertValidPickup(pickup: Record<string, unknown>) {
   expect(pickup).toHaveProperty("fraction");
   expect(pickup).toHaveProperty("color");
   expect(pickup).toHaveProperty("category");
+  expect(pickup).toHaveProperty("categories");
 
   // ISO date format YYYY-MM-DD
-  expect(pickup.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  expect(pickup.date).toMatch(isoDatePattern);
   // Non-empty fraction name
   expect(typeof pickup.fraction).toBe("string");
   expect((pickup.fraction as string).length).toBeGreaterThan(0);
   // Hex color
-  expect(pickup.color).toMatch(/^#[0-9a-fA-F]{6}$/);
+  expect(pickup.color).toMatch(hexColorPattern);
   // Valid category
   expect(VALID_CATEGORIES.has(pickup.category as FractionCategory)).toBe(true);
+  expect(Array.isArray(pickup.categories)).toBe(true);
+  expect((pickup.categories as FractionCategory[]).length).toBeGreaterThan(0);
+  for (const category of pickup.categories as FractionCategory[]) {
+    expect(VALID_CATEGORIES.has(category)).toBe(true);
+  }
 }
 
 export function assertValidAddress(addr: Record<string, unknown>) {

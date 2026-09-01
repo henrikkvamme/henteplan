@@ -4,18 +4,20 @@ import type { WastePickup } from "@/providers/types";
 
 const samplePickups: WastePickup[] = [
   {
+    categories: ["residual"],
+    category: "residual",
+    color: "#71717a",
     date: "2026-03-05",
     fraction: "Restavfall",
     fractionId: "1",
-    category: "residual",
-    color: "#71717a",
   },
   {
+    categories: ["paper"],
+    category: "paper",
+    color: "#3b82f6",
     date: "2026-03-12",
     fraction: "Papir",
     fractionId: "2",
-    category: "paper",
-    color: "#3b82f6",
   },
 ];
 
