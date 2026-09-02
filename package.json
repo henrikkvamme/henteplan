@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hono/zod-openapi": "^0.18.4",
+    "@hono/zod-openapi": "^1.6.1",
     "@scalar/hono-api-reference": "^0.12.0",
     "hono": "^4.13.5",
     "hono-rate-limiter": "^0.5.3",
