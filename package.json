@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.18.4",
-    "@scalar/hono-api-reference": "^0.12.2",
-    "hono": "^4.13.8",
+    "@scalar/hono-api-reference": "^0.12.6",
+    "hono": "^4.13.9",
     "hono-rate-limiter": "^0.5.4",
     "ical-generator": "^8.1.1",
     "node-html-parser": "^7.1.0",
