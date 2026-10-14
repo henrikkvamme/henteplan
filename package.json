@@ -17,15 +17,15 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.18.4",
-    "@scalar/hono-api-reference": "^0.12.6",
-    "hono": "^4.13.9",
+    "@scalar/hono-api-reference": "^0.12.11",
+    "hono": "^4.13.13",
     "hono-rate-limiter": "^0.5.4",
     "ical-generator": "^8.1.1",
     "node-html-parser": "^7.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.14",
+    "@biomejs/biome": "^2.5.15",
     "@types/bun": "latest",
     "typescript": "^5.9.3",
     "ultracite": "^7.12.0"
